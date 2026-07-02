@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta
+    name="description"
+    content="등기부등본(등기사항전부증명서) PDF를 올리면 갑구·을구에 적힌 사실을 시간순으로 쉽게 정리해 드립니다. 파일은 서버로 전송되지 않고 브라우저 안에서만 분석됩니다."
+  />
+  <title>등기부등본 쉬운 해석기</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1 class="site-title">등기부등본 쉬운 해석기</h1>
+    <p class="site-subtitle">
+      등기부등본 PDF를 올리면, 갑구·을구에 적힌 사실을 시간순으로 쉽게 정리해 드립니다.
+    </p>
+  </header>
+
+  <main class="container">
+    <!-- 업로드 영역 -->
+    <section
+      id="dropZone"
+      class="upload-zone"
+      aria-label="PDF 업로드 영역"
+      tabindex="0"
+    >
+      <div class="upload-inner">
+        <p class="upload-headline">여기로 등기부등본 PDF를 끌어다 놓으세요</p>
+        <p class="upload-or">또는</p>
+        <label for="fileInput" class="upload-button">파일 선택</label>
+        <input
+          id="fileInput"
+          class="visually-hidden"
+          type="file"
+          accept="application/pdf,.pdf"
+        />
+        <p class="upload-note" id="uploadNotice">
+          올리신 파일은 서버로 전송되지 않고, 이 브라우저 안에서만 분석됩니다.
+        </p>
+      </div>
+    </section>
+
+    <!-- 건물 종류 선택: 중학생 해석의 표제부 호칭에 반영(예: "이 아파트는 …에 있어요.") -->
+    <div class="kind-select">
+      <label for="propertyKind" class="kind-label">건물 종류</label>
+      <select id="propertyKind" class="kind-input">
+        <!-- 여기에 종류 추가: <option value="값">표시이름</option> -->
+        <option value="">선택 안 함</option>
+        <option value="아파트">아파트</option>
+        <option value="오피스텔">오피스텔</option>
+        <option value="다세대주택">다세대주택(빌라)</option>
+        <option value="단독주택">단독주택</option>
+        <option value="상가">상가</option>
+        <option value="근린생활시설">근린생활시설</option>
+        <option value="공장">공장</option>
+        <option value="토지">토지</option>
+      </select>
+    </div>
+
+    <!-- 상태 메시지 -->
+    <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
+
+    <!-- 파싱 진행 표시(약 2초). 로컬 애니메이션만 — 외부 통신 없음. -->
+    <div
+      id="progress"
+      class="progress"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="등기부 분석 진행률"
+      hidden
+    >
+      <div class="progress-bar"></div>
+    </div>
+
+    <!-- 결과 컨테이너 (빈 div) -->
+    <section id="resultContainer" class="result-container" aria-live="polite"></section>
+
+    <!-- 결과 하단 면책 문구 -->
+    <footer class="disclaimer">
+      <p class="disclaimer-warn">
+        이 프로그램은 등기부에 적힌 사실을 쉽게 정리해 드릴 뿐, 권리의 인수·소멸 등 법적 판단은
+        제공하지 않습니다. 놓친 부분이 있을 수 있으니 반드시 등기부등본 원본과 비교해 확인하시고,
+        정확한 권리분석과 투자 판단은 전문가와 상의하세요.
+      </p>
+    </footer>
+  </main>
+
+  <!-- PDF.js 로컬(self-host) 로드 + 앱 진입점 -->
+  <script type="module">
+    import * as pdfjsLib from "./vendor/pdfjs/pdf.min.mjs";
+    // 워커도 로컬 파일만 사용 (외부 통신 0)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "./vendor/pdfjs/pdf.worker.min.mjs";
+    // 전역으로 공유 (app.js / pdf-loader.js가 동일 인스턴스 사용)
+    window.pdfjsLib = pdfjsLib;
+  </script>
+  <script type="module" src="js/app.js"></script>
+
+  <!-- 방문 집계(운영자 전용, 화면 표시 없음) -->
+  <script>
+    /* 방문자 수는 운영자만 확인(GoatCounter 대시보드). 화면 표시 없음.
+       아래 코드에 본인 GoatCounter 사이트코드를 넣으면 익명 방문집계 시작.
+       비워두면 집계 안 함(외부통신 0 유지). PDF·파싱결과는 전송하지 않음(익명 페이지뷰만). */
+    var GOATCOUNTER_CODE = ""; // 예: "myblog" → https://myblog.goatcounter.com (가입 후 입력)
+    if (GOATCOUNTER_CODE) {
+      var gc = document.createElement("script");
+      gc.async = true;
+      gc.src = "//gc.zgo.at/count.js";
+      gc.setAttribute("data-goatcounter", "https://" + GOATCOUNTER_CODE + ".goatcounter.com/count");
+      document.head.appendChild(gc);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,862 @@
+/* ==========================================================================
+   등기부등본 쉬운 해석기 — style.css (M1 스캐폴드)
+   모바일 우선 / 반응형 뼈대 / 부록A 의미색 CSS 변수
+   ========================================================================== */
+
+:root {
+  /* 부록 A — category 의미색 (의미별로만 사용, 무지개식 금지) */
+  --c-ownership: #2563eb; /* 파랑  : 소유권(매매·보존·이전) */
+  --c-loan:      #f59e0b; /* 주황  : 근저당·저당·질권 */
+  --c-restraint: #dc2626; /* 빨강  : 가압류·압류·가처분 */
+  --c-auction:   #991b1b; /* 진빨강: 강제·임의경매개시 */
+  --c-right:     #0d9488; /* 청록  : 전세권·지상권·지역권 */
+  --c-pending:   #7c3aed; /* 보라  : 가등기 */
+  --c-etc:       #6b7280; /* 회색  : 표시변경 등(기본 숨김) / 말소 꼬리표 고정색 */
+
+  /* 기본(라이트) 테마 토큰 */
+  --bg:            #f4f5f7;
+  --surface:       #ffffff;
+  --surface-alt:   #f9fafb;
+  --text:          #1f2937;
+  --text-muted:    #6b7280;
+  --border:        #d1d5db;
+  --border-strong: #9ca3af;
+  --accent:        var(--c-ownership);
+  --drop-active:   #eff6ff;
+
+  --radius:   12px;
+  --radius-sm: 8px;
+  --gap:      16px;
+  --maxw:     760px;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic",
+          "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+/* ==========================================================================
+   다크모드 (M8) — OS 다크 자동대응(prefers-color-scheme: dark)
+   배경/글자/카드/말풍선/배지/표제부 헤더 대비 4.5:1 이상.
+   의미색(category)은 어두운 배경에서도 식별되도록 밝게 조정(변수만 교체).
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 표면/글자 토큰 */
+    --bg:            #111418;
+    --surface:       #1b1f24;
+    --surface-alt:   #232830;
+    --text:          #e8eaed; /* on --surface(#1b1f24): ≈ 12:1 */
+    --text-muted:    #aab2bd; /* on --surface(#1b1f24): ≈ 6.4:1 */
+    --border:        #3a4150;
+    --border-strong: #5b6472;
+    --drop-active:   #1e293b;
+
+    /* 부록 A 의미색 — 다크 배경용 밝은 변형(의미는 동일, 명도만 상향) */
+    --c-ownership: #60a5fa; /* 파랑  : 소유권 */
+    --c-loan:      #fbbf24; /* 주황  : 근저당·저당·질권 */
+    --c-restraint: #f87171; /* 빨강  : 가압류·압류·가처분 */
+    --c-auction:   #fb7185; /* 진빨강(로즈): 경매개시 — restraint와 구분 */
+    --c-right:     #2dd4bf; /* 청록  : 전세권·지상권·지역권 */
+    --c-pending:   #c084fc; /* 보라  : 가등기 */
+    --c-etc:       #9aa3af; /* 회색  : 표시변경/말소 꼬리표 */
+  }
+
+  /* 단색 채움 + 흰글자 컴포넌트는 밝아진 배경 위에서 글자색을 어둡게(대비 확보) */
+  .upload-button,
+  .pyo-label,
+  .mode-btn-easy {
+    color: #0b1018; /* 밝은 의미색 배경 위 어두운 글자 → 대비 ≥ 7:1 */
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- 헤더 ---------- */
+.site-header {
+  padding: 24px 16px 8px;
+  text-align: center;
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+.site-title {
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+.site-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ---------- 레이아웃 ---------- */
+.container {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ---------- 업로드 영역 ---------- */
+.upload-zone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 32px 16px;
+  text-align: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  outline: none;
+}
+.upload-zone:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+.upload-zone.is-dragover {
+  background: var(--drop-active);
+  border-color: var(--accent);
+}
+.upload-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.upload-headline { font-size: 1.05rem; font-weight: 600; margin: 0; }
+.upload-or { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;        /* 터치타겟 ≥44px */
+  background: var(--accent);
+  color: #fff;
+  padding: 11px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;         /* 본문 ≥16px */
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.upload-button:hover { filter: brightness(0.95); }
+
+.upload-note {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* 접근성: 화면에서 숨기되 스크린리더/포커스에는 노출 */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- 건물 종류 드롭다운 ---------- */
+.kind-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+}
+.kind-label {
+  font-size: 1rem;          /* 본문 ≥16px */
+  font-weight: 600;
+  color: var(--text);
+}
+.kind-input {
+  width: 100%;              /* 모바일 풀폭 */
+  min-height: 44px;         /* 터치타겟 ≥44px */
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 1rem;          /* 본문 ≥16px */
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.kind-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+/* ---------- 상태 메시지 ---------- */
+.status-message {
+  min-height: 1.2em;
+  margin: 14px 2px;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+.status-message.is-error { color: var(--c-restraint); font-weight: 600; }
+.status-message.is-busy  { color: var(--accent); }
+
+/* ---------- 결과 컨테이너 ---------- */
+.result-container { margin-top: 8px; }
+
+/* M1: 추출 텍스트 raw 덤프용 <pre> */
+.result-container pre,
+.raw-dump {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* ---------- 면책 문구 ---------- */
+.disclaimer {
+  margin: 28px 0 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.disclaimer p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* 면책 경고 강조 — 빨강(라이트/다크 모두 대비 확보). 집요정 아웃트로 대사에도 재사용. */
+.disclaimer .disclaimer-warn,
+.bubble .disclaimer-warn,
+.disclaimer-warn {
+  color: #c92a2a;
+  font-weight: 600;
+}
+@media (prefers-color-scheme: dark) {
+  .disclaimer .disclaimer-warn,
+  .bubble .disclaimer-warn,
+  .disclaimer-warn { color: #ff8787; }
+}
+
+/* ==========================================================================
+   M6 — 기본 모드 렌더(표제부 헤더 + 시간순 타임라인)
+   모바일 우선. 색은 부록 A 의미색 변수만 사용. category → --cat 매핑.
+   ========================================================================== */
+
+.basic-result { margin-top: 8px; }
+
+/* category → --cat (의미색만, 무지개식 금지) */
+.cat-ownership { --cat: var(--c-ownership); }
+.cat-loan      { --cat: var(--c-loan); }
+.cat-restraint { --cat: var(--c-restraint); }
+.cat-auction   { --cat: var(--c-auction); }
+.cat-right     { --cat: var(--c-right); }
+.cat-pending   { --cat: var(--c-pending); }
+.cat-etc       { --cat: var(--c-etc); }
+
+/* ---------- 표제부 헤더 ---------- */
+.pyo-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.pyo-head { margin-bottom: 12px; }
+.pyo-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--c-ownership);
+  color: #fff;
+}
+.pyo-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px 20px;
+}
+.pyo-row { display: flex; gap: 10px; align-items: baseline; }
+.pyo-key {
+  flex: 0 0 76px;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.pyo-val {
+  margin: 0;
+  font-size: 0.95rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 타임라인 ---------- */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+/* 모바일(~375px 포함): 날짜는 카드 상단으로 접힘(세로 1열 풀폭) */
+.tl-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tl-date { display: flex; align-items: center; gap: 8px; }
+.tl-dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--cat, var(--c-etc));
+}
+.tl-date-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tl-card {
+  position: relative;        /* 말소 X 마크 절대배치 기준 */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cat, var(--c-etc));
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.tl-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tl-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.tl-rank { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+.tl-icon { display: inline-flex; align-items: center; color: var(--cat, var(--c-etc)); }
+.tl-purpose { font-size: 1rem; font-weight: 700; word-break: keep-all; }
+
+.tl-term {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.tl-term.is-insufficient { font-style: italic; }
+
+.tl-basic {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.tl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.tl-chip {
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.tl-chip-amount { font-weight: 600; }
+
+.tl-canceled {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--c-etc);
+}
+
+/* ---------- 통합본 안내(갑구+을구) — 중립 안내 박스 ---------- */
+.integrated-notice {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;          /* 본문 ≥16px */
+  line-height: 1.55;
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 말소(취소) 항목 — 주 신호: 빨간 X(형태) + "말소·날짜·원인"(빨강 텍스트)
+   보조 신호: 색(회색화)+형태(취소선·약화). 색만 의존 금지 → 형태(X)+텍스트(말소) 동반. ---------- */
+/* 의미색 띠·점·아이콘을 회색으로(--cat 회색화). 기본 모드엔 마스코트가 없어 누수 없음. */
+.tl-item.is-canceled { --cat: var(--c-etc); }
+/* 본문 대비 유지(.78 — var(--text) on surface 기준 4.5:1 이상). X 마크가 코너로 넘쳐도 클립. */
+.tl-item.is-canceled .tl-card { opacity: 0.78; overflow: hidden; }
+/* X 마크가 헤더 텍스트를 가리지 않도록 우측 여백 확보(말소 카드만). */
+.tl-item.is-canceled .tl-card-head { padding-right: 52px; }
+/* 취소선은 제목 텍스트 span 에만(아이콘·배지·칩엔 안 그어짐). 색은 currentColor(회색/본문색). */
+.tl-item.is-canceled .tl-purpose {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
+}
+/* "말소 · 날짜 · 원인" 라벨(빨강·사실어). 취소선 영향 밖(별도 span). 길면 줄바꿈. */
+.tl-canceled-chip {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--c-restraint);
+  color: var(--c-restraint);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 크고 또렷한 빨간 X 마크(말소 관행). 장식(aria-hidden) — 카드 우상단 코너. */
+.canceled-x {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--c-restraint);
+  pointer-events: none;
+  line-height: 0;
+}
+.canceled-x svg { display: block; width: 44px; height: 44px; }
+
+.tl-empty {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ---------- 요약본(결과 하단) — 사실 집계만 ---------- */
+.summary {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.summary-title {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.summary-note {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.summary-sub { margin-top: 14px; }
+.summary-sub:first-of-type { margin-top: 0; }
+.summary-subtitle {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  padding-left: 10px;
+  border-left: 4px solid var(--accent);
+}
+.summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.summary-line {
+  font-size: 1rem;          /* 본문 ≥16px */
+  line-height: 1.55;
+  color: var(--text);
+  padding: 8px 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.summary-sum {
+  font-weight: 700;
+  border-color: var(--border-strong);
+}
+/* 소유자 변동 체인: 현재 소유자 줄만 단순 강조(굵게 + 소유권 의미색 좌측 띠).
+   색은 --accent(--c-ownership, 다크모드에서도 식별되는 밝은 변형)로 표시. */
+.summary-owner-current {
+  font-weight: 700;
+  border-color: var(--accent);
+  border-left: 4px solid var(--accent);
+}
+.bubble-summary { border-color: var(--accent); }
+
+/* ---------- 반응형 ---------- */
+/* 태블릿 768px~: 헤더 2열, 업로드 여백 확대 */
+@media (min-width: 768px) {
+  .site-title { font-size: 1.85rem; }
+  .upload-zone { padding: 48px 24px; }
+  .pyo-grid { grid-template-columns: 1fr 1fr; }
+  /* 건물 종류: 라벨 + 셀렉트 가로 배치 */
+  .kind-select { flex-direction: row; align-items: center; gap: 12px; }
+  .kind-input { width: auto; min-width: 220px; }
+}
+
+/* PC 1280px~: 타임라인 = 좌측 날짜 + 우측 카드 2열 */
+@media (min-width: 1280px) {
+  .tl-item {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    align-items: start;
+    gap: 18px;
+  }
+  .tl-date {
+    justify-content: flex-end;
+    padding-top: 14px;
+    text-align: right;
+  }
+  .tl-date-text { order: -1; }
+}
+
+/* ==========================================================================
+   M7 — 중학생 모드(집요정 + 말풍선) + 전환 UI
+   모바일 우선: 아바타 + 말풍선 세로 스택, 가로 넘침 0, 터치타겟 ≥44px, 본문 ≥16px.
+   색은 부록 A 의미색(--cat) 재사용. 768/1280 기존 미디어쿼리와 일관.
+   ========================================================================== */
+
+/* ---------- 모드 그룹/전환 UI(8.3) ---------- */
+.mode-group { margin-top: 8px; }
+.mode-group[hidden] { display: none; }
+/* 모드 전환 후 프로그램적 포커스(tabindex=-1) — 큰 컨테이너 외곽선은 숨김 */
+.mode-group:focus { outline: none; }
+
+.mode-switch {
+  margin-top: 18px;
+  padding: 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.mode-switch-text {
+  margin: 0;
+  font-size: 1rem;       /* 본문 ≥16px */
+  color: var(--text);
+}
+.mode-switch-back {
+  margin-top: 0;
+  margin-bottom: 16px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.mode-btn {
+  min-height: 44px;       /* 터치타겟 ≥44px */
+  padding: 11px 24px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mode-btn-easy  { background: var(--accent); color: #fff; }
+.mode-btn-basic { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); }
+.mode-btn:hover { filter: brightness(0.97); }
+.mode-btn:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.4); outline-offset: 2px; }
+
+/* ---------- 중학생 모드 본문 ---------- */
+.easy-result {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.easy-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 마스코트 아바타 */
+.mascot-avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cat, var(--accent));
+}
+.mascot-avatar svg { display: block; }
+.mascot-lg { color: var(--accent); }
+
+/* 말풍선 (꼬리 포함) */
+.bubble {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;             /* 가로 넘침 방지(플렉스 자식) */
+  max-width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.bubble-text {
+  margin: 0;
+  font-size: 1rem;          /* 본문 ≥16px */
+  line-height: 1.6;
+  color: var(--text);
+  overflow-wrap: anywhere;  /* 긴 주소/단어 줄바꿈 */
+  word-break: break-word;
+}
+.bubble-intro, .bubble-outro { border-color: var(--accent); }
+
+/* 모바일 기본: 꼬리 위쪽(아바타 방향) */
+.bubble::before {
+  content: "";
+  position: absolute;
+  top: -8px; left: 22px;
+  border-width: 0 8px 8px 8px;
+  border-style: solid;
+  border-color: transparent transparent var(--border) transparent;
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: -6px; left: 23px;
+  border-width: 0 7px 7px 7px;
+  border-style: solid;
+  border-color: transparent transparent var(--surface) transparent;
+}
+
+/* 인트로/아웃트로/표제부/요약/항목 — 아바타 + 말풍선 (모바일 세로 스택) */
+.easy-intro, .easy-outro, .easy-pyo, .easy-summary, .easy-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* 타임라인 항목 카드 */
+.easy-item {
+  position: relative;        /* 말소 X 마크 절대배치 기준 */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cat, var(--c-etc));
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.easy-item .bubble { border-color: var(--border); }
+
+.easy-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.easy-term {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.easy-term.is-insufficient { font-style: italic; }
+
+.easy-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.easy-chip {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.easy-chip-amount { font-weight: 600; }
+
+.easy-canceled {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--c-etc);
+}
+
+/* 말소(지워짐) 항목: 말풍선 약화 + 회색 테두리 + "지워짐" 태그.
+   ★--cat 를 건드리지 않고 border-left-color 만 회색으로 → 마스코트 색 누수 방지.
+   취소선은 본문에 쓰지 않음(읽기 방해). */
+.easy-item.is-canceled { border-left-color: var(--c-etc); overflow: hidden; }
+.easy-item.is-canceled .bubble {
+  opacity: 0.8;             /* 본문 대비 유지 */
+  border-color: var(--border-strong);
+}
+/* X 마크가 본문 텍스트를 가리지 않게 우측 여백 확보(말소 카드만). */
+.easy-item.is-canceled .easy-body { padding-right: 50px; }
+/* "말소 · 날짜 · 원인" 라벨(빨강·사실어). 길면 줄바꿈. */
+.easy-canceled-tag {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--c-restraint);
+  color: var(--c-restraint);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.bubble-empty { align-self: stretch; }
+
+/* ---------- 반응형: 768px~ 아바타 + 말풍선 가로 배치, 꼬리 왼쪽 ---------- */
+@media (min-width: 768px) {
+  .easy-intro, .easy-outro, .easy-pyo, .easy-summary, .easy-item {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  /* 꼬리: 위 → 왼쪽(아바타가 좌측에 위치) */
+  .easy-intro .bubble::before,
+  .easy-outro .bubble::before,
+  .easy-pyo .bubble::before,
+  .easy-summary .bubble::before,
+  .easy-item .bubble::before {
+    top: 16px; left: -8px;
+    border-width: 8px 8px 8px 0;
+    border-color: transparent var(--border) transparent transparent;
+  }
+  .easy-intro .bubble::after,
+  .easy-outro .bubble::after,
+  .easy-pyo .bubble::after,
+  .easy-summary .bubble::after,
+  .easy-item .bubble::after {
+    top: 17px; left: -6px;
+    border-width: 7px 7px 7px 0;
+    border-color: transparent var(--surface) transparent transparent;
+  }
+
+  .mode-switch { flex-direction: row; justify-content: center; }
+}
+
+/* ==========================================================================
+   Part 3 — 파싱 진행 표시(프로그레스바, 약 2초)
+   얇은 트랙 + 채움 바. 다크모드 토큰 재사용. 이모지·평가어 없음.
+   외부 통신 없음: 채움은 로컬 CSS 트랜지션으로만 진행된다.
+   ========================================================================== */
+.progress {
+  width: 100%;
+  height: 6px;
+  margin: 10px 2px 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress[hidden] { display: none; }
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 2s linear;
+}
+/* 채워진 상태(JS가 클래스로 토글) — 0% → 100% */
+.progress.is-filling .progress-bar { width: 100%; }
+/* 모션 최소화 선호 시: 애니메이션 없이 즉시 채움(체감지연 자체는 유지) */
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar { transition: none; }
+}
+
+/* ==========================================================================
+   Part 1 — iframe 임베드 모드 (.embed)
+   블로그(티스토리) 임베드 시 세로 공간 절약. 면책·업로드 note·결과는 유지.
+   ========================================================================== */
+.embed .site-header { display: none; }
+.embed .container { padding-top: 8px; }
+
+/* 좁은 폭(모바일/좁은 iframe) 대응 — 여백 축소 */
+@media (max-width: 600px) {
+  .container { padding: 8px; }
+}
+
+/* ==========================================================================
+   도메인 잠금 안내 (.access-lock)
+   직접 접속 시 업로드존 자리에 표시되는 카드형 안내 박스.
+   surface·border 토큰만 사용 → 라이트/다크 자동 대응. 이모지·평가어 없음.
+   버튼은 기존 .upload-button 스타일 재사용(터치타겟 ≥44px).
+   ========================================================================== */
+.access-lock {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+}
+.access-lock-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.access-lock-text {
+  font-size: 1rem;          /* 본문 ≥16px */
+  color: var(--text);
+  margin: 0 0 18px;
+  line-height: 1.6;
+}
+/* 링크 버튼: .upload-button 재사용 + 앵커 밑줄 제거 */
+.access-lock-link {
+  text-decoration: none;
+}
+.access-lock-pending {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .access-lock { padding: 24px 14px; }
+}

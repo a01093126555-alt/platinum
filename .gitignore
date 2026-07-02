@@ -1,0 +1,30 @@
+# 개인정보 보호 — 등기부 PDF는 절대 커밋 금지
+*.pdf
+sample_test.pdf
+
+# OS / 편집기
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# 로그/임시
+*.log
+*.tmp
+/tmp/
+node_modules/
+
+# Claude 로컬 개인설정(권한 등) — 에이전트 정의(.claude/agents)는 커밋
+.claude/settings.local.json
+
+# 빌드 산출(이 프로젝트는 무빌드 정적이라 보통 비어 있음)
+dist/
+build/
+
+# 내부 문서 — 샘플 등기부 실명·주소 포함, 저장소 비공개 유지(로컬 보관)
+HANDOFF.md
+PARSING_NOTES.md
+등기부_쉬운해석기_설계서.md
+설계내역.md
+용어집_사양.md
+.claude/agents/parser-verifier.md
