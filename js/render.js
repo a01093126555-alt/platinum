@@ -318,6 +318,125 @@ function buildTimelineItem(item) {
 }
 
 // ---------------------------------------------------------------------------
+// 등기부 원형 보기(기본 모드 전용) — 표제부/갑구/을구 구획 재현
+//   가산형: 기존 buildTimelineItem 재사용, 재파싱·재정렬 계산 없이 show/hide 토글.
+//   섹션 헤더는 등기부 원문 표기 그대로(사실) — 평가어 아님.
+// ---------------------------------------------------------------------------
+
+/**
+ * 순위번호 문자열("8", "5-1")을 {main, sub} 숫자로 파싱.
+ * 형식이 아니면 main=MAX(맨 뒤로), sub=0 — 문자열 비교 금지(숫자 비교만).
+ * @param {(string|number)} rank
+ * @returns {{main:number, sub:number}}
+ */
+function parseRank(rank) {
+  const s = String(rank == null ? "" : rank).trim();
+  const m = s.match(/^(\d+)(?:-(\d+))?$/);
+  if (!m) return { main: Number.MAX_SAFE_INTEGER, sub: 0 };
+  return { main: parseInt(m[1], 10), sub: m[2] ? parseInt(m[2], 10) : 0 };
+}
+
+/**
+ * 순위번호 비교 — 주번호 오름차순, 같은 주번호 내 부기 오름차순.
+ * 예: 1, 2, 5, 5-1, 5-2, 6 ("15" 가 "5" 뒤로 밀리는 문자열 비교 오류 없음).
+ * @param {(string|number)} a
+ * @param {(string|number)} b
+ * @returns {number}
+ */
+function compareRank(a, b) {
+  const ra = parseRank(a);
+  const rb = parseRank(b);
+  return ra.main - rb.main || ra.sub - rb.sub;
+}
+
+/** 구 구획 정의 — 헤더 문구는 등기부 원문 표기 그대로. */
+const GU_SECTIONS = [
+  { gu: "갑구", title: "【 갑 구 】 (소유권에 관한 사항)" },
+  { gu: "을구", title: "【 을 구 】 (소유권 이외의 권리에 관한 사항)" },
+];
+
+/**
+ * 등기부 순서 뷰 — 갑구/을구 구획별로 순위번호 순 카드 나열.
+ * 표제부 헤더는 이미 위에 상시 표시되므로 여기서 중복 생성하지 않는다.
+ * 카드는 buildTimelineItem 재사용(해석 문장·칩·말소 X 동일).
+ * @param {Array} visibleItems  - display !== false 필터 완료된 timeline 항목
+ * @returns {HTMLElement}
+ */
+function buildRegistryOrderView(visibleItems) {
+  const wrap = el("div", "registry-order");
+  for (const sec of GU_SECTIONS) {
+    const section = el("section", "gu-section");
+    section.setAttribute("aria-label", sec.gu);
+    section.appendChild(el("h3", "gu-title", sec.title));
+
+    const items = visibleItems
+      .filter((it) => it && it.gu === sec.gu)
+      .slice()
+      .sort((a, b) => compareRank(a.rank, b.rank));
+
+    if (items.length === 0) {
+      section.appendChild(el("p", "gu-empty", "기록된 항목 없음"));
+    } else {
+      const list = el("div", "timeline gu-list");
+      for (const item of items) list.appendChild(buildTimelineItem(item));
+      section.appendChild(list);
+    }
+    wrap.appendChild(section);
+  }
+  return wrap;
+}
+
+/**
+ * 보기 전환 탭 + 두 뷰 컨테이너를 root 에 부착.
+ * [시간순 통합](기본 선택) / [등기부 순서] — 클릭 시 재파싱·재정렬 없이 show/hide 만.
+ * 등기부 순서 뷰는 처음 선택될 때 1회 지연 렌더 후 재사용.
+ * @param {HTMLElement} root
+ * @param {Array} visibleItems  - display !== false 필터 완료 항목
+ */
+function attachViewSwitch(root, visibleItems) {
+  // 탭(터치타겟 ≥44px 는 CSS .view-tab 이 보장)
+  const tabs = el("div", "view-switch");
+  tabs.setAttribute("role", "group");
+  tabs.setAttribute("aria-label", "보기 방식 선택");
+
+  const btnTime = el("button", "view-tab", "시간순 통합");
+  btnTime.type = "button";
+  btnTime.setAttribute("aria-pressed", "true");
+
+  const btnReg = el("button", "view-tab", "등기부 순서");
+  btnReg.type = "button";
+  btnReg.setAttribute("aria-pressed", "false");
+
+  tabs.appendChild(btnTime);
+  tabs.appendChild(btnReg);
+  root.appendChild(tabs);
+
+  // 뷰 1: 시간순 통합(기존 타임라인 그대로, 기본 표시)
+  const integrated = el("div", "timeline view-integrated");
+  for (const item of visibleItems) integrated.appendChild(buildTimelineItem(item));
+  root.appendChild(integrated);
+
+  // 뷰 2: 등기부 순서(초기 숨김 — 첫 선택 시 1회 렌더)
+  const registry = el("div", "registry-view");
+  toggleHidden(registry, true);
+  root.appendChild(registry);
+
+  let registryRendered = false;
+  function selectView(showRegistry) {
+    if (showRegistry && !registryRendered) {
+      registry.appendChild(buildRegistryOrderView(visibleItems));
+      registryRendered = true;
+    }
+    toggleHidden(integrated, showRegistry);
+    toggleHidden(registry, !showRegistry);
+    btnTime.setAttribute("aria-pressed", String(!showRegistry));
+    btnReg.setAttribute("aria-pressed", String(showRegistry));
+  }
+  btnTime.addEventListener("click", () => selectView(false));
+  btnReg.addEventListener("click", () => selectView(true));
+}
+
+// ---------------------------------------------------------------------------
 // 요약본 — 사실 집계(개수·금액·날짜·이름)까지만. 법적 판단·평가어 금지.
 //   registryData.timeline 에서 직접 계산(데이터 가공은 render 담당).
 // ---------------------------------------------------------------------------
@@ -612,9 +731,8 @@ export function renderBasic(registryData, container) {
       )
     );
   } else {
-    const list = el("div", "timeline");
-    for (const item of visible) list.appendChild(buildTimelineItem(item));
-    root.appendChild(list);
+    // 보기 전환 탭 + [시간순 통합]/[등기부 순서] 두 뷰(재파싱 없이 show/hide 토글)
+    attachViewSwitch(root, visible);
   }
 
   // 3) 요약본(결과 하단) — 등기 항목이 있을 때만(없으면 위 안내문으로 충분).

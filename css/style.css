@@ -429,6 +429,17 @@ body {
   text-decoration-thickness: 2px;
   text-decoration-color: currentColor;
 }
+/* 순위번호 배지 말소 표시 — 실제 등기부 관행(순위번호에 빨간 취소선) 재현.
+   .is-canceled 조상 공통 규칙 → 시간순 통합·등기부 순서 두 뷰 모두 일관 적용.
+   색만 의존 X — "말소" 라벨·X 마크 텍스트/형태 신호 동반. 현존 항목엔 미적용. */
+.is-canceled .tl-rank {
+  color: var(--c-restraint);
+  font-weight: 700;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
+}
+
 /* "말소 · 날짜 · 원인" 라벨(빨강·사실어). 취소선 영향 밖(별도 span). 길면 줄바꿈. */
 .tl-canceled-chip {
   font-size: 0.74rem;
@@ -458,6 +469,71 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 16px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ---------- 보기 전환 탭([시간순 통합]/[등기부 순서]) — 기본 모드 전용 ----------
+   모바일 1열 대응: 두 버튼 균등 분할(flex 1) → 가로 스크롤 0. 터치타겟 ≥44px. */
+.view-switch {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.view-tab {
+  flex: 1 1 0;
+  min-height: 44px;         /* 터치타겟 ≥44px */
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;          /* 본문 ≥16px */
+  font-weight: 600;
+  cursor: pointer;
+  word-break: keep-all;
+}
+.view-tab[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.view-tab:hover { filter: brightness(0.97); }
+.view-tab:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.4); outline-offset: 2px; }
+/* 다크모드: 밝아진 --accent 배경 위 어두운 글자(대비 확보) */
+@media (prefers-color-scheme: dark) {
+  .view-tab[aria-pressed="true"] { color: #0b1018; }
+}
+
+/* hidden 속성이 .timeline{display:flex} 등 저자 규칙에 밀리지 않게 명시 */
+.view-integrated[hidden],
+.registry-view[hidden] { display: none; }
+
+/* ---------- 등기부 순서 뷰 — 갑구/을구 구획(표제부 헤더는 위에 상시 존재) ---------- */
+.gu-section { margin-top: 4px; }
+.gu-section + .gu-section { margin-top: 22px; }
+/* 구획 헤더: 등기부 원문 표기(【 갑 구 】 …) — 가운데 정렬 띠 */
+.gu-title {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;          /* 본문 ≥16px */
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* 비어 있는 구 안내(사실 한 줄) */
+.gu-empty {
+  margin: 0;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
   font-size: 0.95rem;
   color: var(--text-muted);
 }
