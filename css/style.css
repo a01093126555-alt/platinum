@@ -860,3 +860,67 @@ body {
 @media (max-width: 600px) {
   .access-lock { padding: 24px 14px; }
 }
+
+/* ==========================================================================
+   후원 박스 (.support-box) — "커피 사주기"
+   결과 하단·면책 위 카드. surface·border 토큰만 사용 → 라이트/다크 자동 대응.
+   버튼은 amber(--c-loan) 계열 — 눈에 띄되 의미색 체계를 벗어나지 않게.
+   버튼은 새 탭 앵커일 뿐(외부 스크립트/위젯 없음). 이모지 없음(SVG 아이콘).
+   ========================================================================== */
+.support-box {
+  margin-top: 20px;
+  padding: 20px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.support-text {
+  margin: 0;
+  font-size: 1rem;          /* 본문 ≥16px */
+  line-height: 1.6;
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;  /* 좁은 폭에서도 가로스크롤 0 */
+}
+.support-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;         /* 터치타겟 ≥44px */
+  padding: 11px 22px;
+  max-width: 100%;
+  background: var(--c-loan); /* amber 계열 */
+  color: #3b2b06;            /* amber 위 어두운 갈색 글자 — 대비 확보 */
+  border-radius: var(--radius-sm);
+  font-size: 1rem;          /* 본문 ≥16px */
+  font-weight: 600;
+  text-decoration: none;    /* 앵커 밑줄 제거 */
+  word-break: keep-all;
+  cursor: pointer;
+  user-select: none;
+}
+.support-button:hover { filter: brightness(0.95); }
+.support-button:focus-visible {
+  outline: 3px solid rgba(245, 158, 11, 0.45);
+  outline-offset: 2px;
+}
+.support-icon {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.support-icon svg { display: block; }
+
+/* 다크모드: --c-loan 이 밝은 amber(#fbbf24)로 바뀜 → 글자는 계속 어둡게(대비 유지) */
+@media (prefers-color-scheme: dark) {
+  .support-button { color: #0b1018; }
+}
+@media (max-width: 600px) {
+  .support-box { padding: 16px 12px; }
+}

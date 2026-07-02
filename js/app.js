@@ -19,6 +19,13 @@ const ACCESS = {
   devKey: "pt-owner-2026",        // 운영자 해제: ?dev=pt-owner-2026 (원하면 변경)
 };
 
+// ===== 후원 설정 (운영자 수정 지점) =====
+//   커피 사주기 버튼: 클릭 시 새 탭으로 이동하는 앵커일 뿐(외부 스크립트/위젯 로드 없음).
+const SUPPORT = {
+  url: "",   // ★후원 링크 — 입력하면 버튼 표시(예: 토스 익명송금 링크). 비우면 버튼 숨김
+  label: "커피 한 잔 사주기",
+};
+
 // 스캔본(이미지) 판정 기준: 추출된 글자 수가 이보다 적으면 텍스트가 없는 PDF로 본다.
 // 정상 등기사항전부증명서는 글자 수가 수천 자에 달한다.
 const SCAN_TEXT_MIN = 30;
@@ -202,6 +209,48 @@ function isPdfFile(file) {
   return byType || byExt;
 }
 
+// ---------- 후원 박스 (커피 사주기) ----------
+//   SUPPORT.url 이 있을 때만 카드 생성(비어 있으면 null → 아무것도 렌더 안 함).
+//   버튼은 새 탭 앵커일 뿐 — 외부 스크립트/위젯 로드 없음(외부통신 0 유지).
+function buildSupportBox() {
+  if (!SUPPORT.url) return null;
+
+  const box = document.createElement("div");
+  box.className = "support-box";
+  box.setAttribute("aria-label", "후원 안내");
+
+  const text = document.createElement("p");
+  text.className = "support-text";
+  text.textContent =
+    "이 해석기가 도움이 되셨나요? 도움이 되셨다면 커피 한 잔으로 응원해 주세요.";
+  box.appendChild(text);
+
+  const link = document.createElement("a");
+  link.className = "support-button";
+  link.href = SUPPORT.url;
+  link.target = "_blank";           // 티스토리 iframe 안 → 새 탭 필수
+  link.rel = "noopener";
+
+  // 커피잔 아이콘 — 인라인 SVG(머그컵 + 손잡이 + 김), currentColor. 장식용.
+  const iconWrap = document.createElement("span");
+  iconWrap.className = "support-icon";
+  iconWrap.setAttribute("aria-hidden", "true");
+  iconWrap.innerHTML =
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round">' +
+    '<rect x="3" y="10" width="12" height="9" rx="2"/>' +
+    '<path d="M15 12h2a3 3 0 0 1 0 6h-2"/>' +
+    '<path d="M6 7c0-1 .8-1.2.8-2"/>' +
+    '<path d="M10 7c0-1 .8-1.2.8-2"/>' +
+    "</svg>";
+  link.appendChild(iconWrap);
+  link.appendChild(document.createTextNode(SUPPORT.label));
+  box.appendChild(link);
+
+  return box;
+}
+
 // ---------- 결과 UI 구성 (기본 모드 + 전환 UI + 중학생 모드) ----------
 //   파싱 결과(data)를 보관해 두 모드가 같은 결과를 재사용한다(재파싱 X).
 function showResult(data) {
@@ -253,6 +302,12 @@ function showResult(data) {
 
   resultEl.appendChild(basicGroup);
   resultEl.appendChild(easyGroup);
+
+  // 후원 박스: 결과(두 모드 그룹) 하단·면책 footer 위에 한 번만 append.
+  //   showResult 진입 시 resultEl.innerHTML="" 로 비우므로 재업로드 중복 없음.
+  //   SUPPORT.url 이 비어 있으면 buildSupportBox 가 null → 렌더 안 함(현재 기본).
+  const supportBox = buildSupportBox();
+  if (supportBox) resultEl.appendChild(supportBox);
 
   // 렌더 완료 → 임베드 높이 재조정(임베드 아니면 no-op).
   postHeight();
