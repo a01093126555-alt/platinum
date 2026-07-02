@@ -13,7 +13,7 @@ import { renderBasic, renderEasy, setMode } from "./render.js";
 //   도메인 잠금: 직접 접속(github.io 등 top-level)은 파싱 기능을 잠그고
 //   티스토리 글로 안내한다. 티스토리 iframe 임베드·localhost·dev키는 허용.
 const ACCESS = {
-  lockEnabled: true,              // false면 잠금 해제(직접 접속도 허용)
+  lockEnabled: false,             // ★현재 꺼짐(테스트 기간) — 티스토리 글 발행 후 true로 켜기. false면 직접 접속도 허용
   tistoryPostUrl: "",             // ★티스토리 해석기 글 URL — 발행 후 입력 (예: "https://내블로그.tistory.com/123")
   allowedParents: ["tistory.com"],// 이 도메인이 부모(referrer)면 허용
   devKey: "pt-owner-2026",        // 운영자 해제: ?dev=pt-owner-2026 (원하면 변경)
