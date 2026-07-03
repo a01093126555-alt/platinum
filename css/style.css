@@ -1209,3 +1209,10 @@ body {
 }
 
 /* (구 "등기부 순서 뷰" 순위번호 컬럼·refsum 스타일은 설계서 5-4 reg-item 구조로 대체됨) */
+
+/* 표제부 블록 — 파란 톤(사용자 확정 2026-07) */
+.reg-block-pyo {
+  background: #e7f1fd;
+  border-color: #b7d3f3;
+}
+.reg-block-pyo .reg-label { border-bottom-color: #b7d3f3; }
