@@ -733,7 +733,9 @@ export function buildSummary(registryData) {
       chain.forEach((it, i) => {
         const party = displayValue(it.party);
         const date = formatDate(it.receiptDate);
-        const base = date ? `${date} · ${party}` : party;
+        let base = date ? `${date} · ${party}` : party;
+        // 소유권 변동 원인(매매/상속/증여 등 — 등기부 기재 그대로) 적시
+        if (hasVal(it.cause)) base += ` (원인: ${String(it.cause).trim()})`;
         if (i === last) {
           addSummaryLine(ul, `${base}  — 현재 소유자`, "summary-owner-current");
         } else {
