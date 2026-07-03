@@ -234,18 +234,21 @@ function bookIconEl() {
 const EDU_CARDS = [
   {
     tag: "tag-title",
+    card: "edu-card-title",
     name: "표제부",
     head: "무엇인가",
     body: "소재지 · 면적 · 구조. 이 부동산의 기본 신원입니다.",
   },
   {
     tag: "tag-gap",
+    card: "edu-card-gap",
     name: "갑구",
     head: "누구 것인가",
     body: "소유자, 그리고 소유권을 흔드는 일(압류 · 가압류 · 경매).",
   },
   {
     tag: "tag-eul",
+    card: "edu-card-eul",
     name: "을구",
     head: "빚이 얼마인가",
     body: "근저당권 · 전세권 등. 이 집이 담보로 진 부담입니다.",
@@ -267,7 +270,7 @@ function buildEduBlock() {
 
   const cards = el("div", "edu-cards");
   for (const c of EDU_CARDS) {
-    const card = el("div", "edu-card");
+    const card = el("div", "edu-card" + (c.card ? " " + c.card : ""));
     const h = el("div", "edu-h");
     h.appendChild(el("span", `tag ${c.tag}`, c.name));
     h.appendChild(el("b", null, c.head));
@@ -892,6 +895,7 @@ export function buildSummary(registryData) {
   //    "자료불충분" 단독 행이 되므로 건너뛴다(창작 금지 — 스킵만).
   if (s.canceled.length > 0) {
     const { sub, ul } = summarySub("정리된(말소된) 권리");
+    sub.classList.add("summary-sub-dead"); // 말소 섹션 컨테이너 표시(가산형 — 색 구분용)
     for (const it of s.canceled) {
       const parts = [];
       const date = formatDate(it.receiptDate);
@@ -900,7 +904,7 @@ export function buildSummary(registryData) {
       parts.push(displayValue(it.purpose));
       let line = parts.join(" · ");
       if (hasVal(it.cause)) line += ` (원인: ${String(it.cause).trim()})`;
-      addSummaryLine(ul, line);
+      addSummaryLine(ul, line, "summary-line-dead");
     }
     if (ul.childElementCount > 0) wrap.appendChild(sub); // 전부 스킵되면 섹션 생략
   }

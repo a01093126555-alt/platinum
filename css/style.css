@@ -86,10 +86,11 @@ body {
 }
 
 /* ---------- 업로드 영역 ---------- */
+/* 파란 톤 통일(유효 파랑 #e7f1fd 팔레트) — 점선 테두리도 파랑 계열 */
 .upload-zone {
-  border: 2px dashed var(--border-strong);
+  border: 2px dashed #7fa9d9;
   border-radius: var(--radius);
-  background: var(--surface);
+  background: #e7f1fd;
   padding: 32px 16px;
   text-align: center;
   transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -97,12 +98,13 @@ body {
   outline: none;
 }
 .upload-zone:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  border-color: var(--gu-gap);
+  box-shadow: 0 0 0 3px rgba(26, 95, 165, 0.25);
 }
+/* 드래그오버: 같은 파랑 계열에서 한 단계 진하게(기존 강조 유지) */
 .upload-zone.is-dragover {
-  background: var(--drop-active);
-  border-color: var(--accent);
+  background: #d0e3fa;
+  border-color: var(--gu-gap);
 }
 .upload-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .upload-headline { font-size: 1.05rem; font-weight: 600; margin: 0; }
@@ -274,6 +276,17 @@ body {
 }
 .edu-h { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .edu-card p { margin: 0; font-size: 13px; color: #5b6270; }
+
+/* 3분 이해 카드 3장 — 분류색 배치(표제부 회색 / 갑구 파랑 / 을구 보라).
+   테두리는 각 톤에 맞춘 한 단계 진한 계열. */
+.edu-card.edu-card-title { background: #f1f2f4; border-color: #dcdfe3; }
+.edu-card.edu-card-gap   { background: #e8f1fd; border-color: #c9def5; }
+.edu-card.edu-card-eul   { background: #f0edfb; border-color: #ddd6f2; }
+/* 분류색 배경 위 태그: 진한 분류색 + 흰 글자(배경과 동색 겹침 방지 — 가독 우선).
+   교육 카드 하위로만 한정 — 다른 곳의 .tag 는 기존 그대로. */
+.edu-card.edu-card-title .tag-title { background: #6b7280; color: #fff; }
+.edu-card.edu-card-gap   .tag-gap   { background: var(--gu-gap); color: #fff; }
+.edu-card.edu-card-eul   .tag-eul   { background: var(--gu-eul); color: #fff; }
 
 /* ---------- 분류 태그(칸 분류색만 — 판단 아님) ---------- */
 .tag {
@@ -700,20 +713,28 @@ body {
   flex-direction: column;
   gap: 6px;
 }
+/* 한눈에 보기 행 — 현존(소유자변동·근저당·그외·이전내역) = 파랑 / 말소 = 베이지
+   (등기부순서 .reg-item.active/.cancelled 와 같은 팔레트) */
 .summary-line {
   font-size: 1rem;          /* 본문 ≥16px */
   line-height: 1.55;
   color: var(--text);
   padding: 8px 12px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
+  background: #e7f1fd;
+  border: 1px solid #cfe0f5;
   border-radius: var(--radius-sm);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
+/* D. 정리된(말소된) 권리 — 행 단위 클래스 + 섹션 컨테이너 클래스 이중 안전망 */
+.summary-line-dead,
+.summary-sub-dead .summary-line {
+  background: #f6efdf;
+  border-color: #e3d7b8;
+}
 .summary-sum {
   font-weight: 700;
-  border-color: var(--border-strong);
+  border-color: var(--gu-gap);
 }
 /* 소유자 변동 체인: 현재 소유자 줄만 단순 강조(굵게 + 소유권 의미색 좌측 띠).
    색은 --accent(--c-ownership, 다크모드에서도 식별되는 밝은 변형)로 표시. */
@@ -978,6 +999,24 @@ body {
   color: var(--dead-chip);
   word-break: keep-all;
   overflow-wrap: anywhere;
+}
+
+/* 쉽게 보기 말풍선 바탕 — 유효 = 파랑 / 말소 = 베이지
+   (등기부순서 .reg-item·통합본 .tl-card 와 같은 팔레트로 통일).
+   --surface/--border 를 말풍선에서 재정의해 꼬리(::before/::after)도 같은 톤으로.
+   인트로/아웃트로/쉬운요약 말풍선은 .easy-item 하위가 아니므로 기존 그대로. */
+.easy-item:not(.is-canceled) .bubble {
+  --surface: #e7f1fd;
+  --border: #b7d3f3;
+  background: #e7f1fd;
+  border-color: #b7d3f3;
+}
+.easy-item.is-canceled .bubble {
+  --surface: #f6efdf;
+  --border: #e0d5b8;
+  background: #f6efdf;
+  border-color: #e0d5b8;
+  opacity: 1; /* 흐림 대신 베이지 바탕이 말소 신호 — 본문 대비 유지 */
 }
 
 .bubble-empty { align-self: stretch; }
