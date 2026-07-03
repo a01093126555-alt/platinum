@@ -329,6 +329,16 @@ function showResult(data) {
 
   // 전환: 첫 클릭 때만 중학생 모드 렌더(재파싱 없이 보관 결과 재사용)
   let easyRendered = false;
+  // 모드 전환 후 새 화면 '맨 위'부터 보이게(사용자 확정 — 스크롤 잔존 방지).
+  //   rAF 는 백그라운드 탭에서 멈추므로 setTimeout 만 사용.
+  function scrollToGroupTop(group) {
+    setTimeout(() => {
+      if (group && typeof group.scrollIntoView === "function") {
+        group.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    }, 120);
+  }
+
   toEasyBtn.addEventListener("click", () => {
     if (!easyRendered) {
       renderEasyWithKind();
@@ -336,7 +346,10 @@ function showResult(data) {
     }
     setMode("easy", data, basicGroup, easyGroup);
     // 전환 대상 컨테이너로 포커스 이동(읽기 위치 재설정).
-    if (typeof easyGroup.focus === "function") easyGroup.focus();
+    if (typeof easyGroup.focus === "function") {
+      try { easyGroup.focus({ preventScroll: true }); } catch (e) { easyGroup.focus(); }
+    }
+    scrollToGroupTop(easyGroup); // 쉽게 보기 맨 위부터
     postHeight(); // 모드 전환으로 높이 급변 → 임베드 재조정
   });
 
@@ -350,7 +363,10 @@ function showResult(data) {
   };
   backBtn.addEventListener("click", () => {
     setMode("basic", data, basicGroup, easyGroup);
-    if (typeof basicGroup.focus === "function") basicGroup.focus();
+    if (typeof basicGroup.focus === "function") {
+      try { basicGroup.focus({ preventScroll: true }); } catch (e) { basicGroup.focus(); }
+    }
+    scrollToGroupTop(basicGroup); // 기본 해석 맨 위부터
     postHeight(); // 모드 전환으로 높이 급변 → 임베드 재조정
   });
 
