@@ -731,6 +731,10 @@ body {
 .summary-sub-dead .summary-line {
   background: #f6efdf;
   border-color: #e3d7b8;
+  /* 사용자 확정: 말소된 권리 행에도 빨간 취소선(27번 스타일 통일) */
+  text-decoration: line-through;
+  text-decoration-color: var(--dead-red);
+  text-decoration-thickness: 2px;
 }
 .summary-sum {
   font-weight: 700;
@@ -979,24 +983,29 @@ body {
   color: var(--c-etc);
 }
 
-/* 말소(지워짐) 항목: 말풍선 약화 + 회색 테두리 + 회색 "말소" 태그.
-   [주의] --cat 를 건드리지 않고 border-left-color 만 회색으로 → 마스코트 색 누수 방지.
-   취소선은 본문에 쓰지 않음(읽기 방해). 판단색(빨강) 없음 — 조용한 회색만. */
+/* 말소 항목(쉽게 보기) — 사용자 확정(2026-07): 등기부 순서 뷰와 동일 표기.
+   베이지 배경(별도 규칙) + 말풍선 문장에 빨간 취소선 + 빨간 "말소·날짜·원인" 칩. */
 .easy-item.is-canceled { border-left-color: var(--c-etc); }
 .easy-item.is-canceled .bubble {
-  opacity: 0.8;             /* 본문 대비 유지 */
+  opacity: 1;               /* 흐림 없음 — 색(베이지)+취소선이 말소 신호 */
   border-color: var(--border-strong);
 }
-/* "말소 · 날짜 · 원인" 라벨(회색·사실어). 길면 줄바꿈. */
+/* 말풍선 문장에 빨간 취소선(27번 스타일 통일) */
+.easy-item.is-canceled .bubble-text {
+  text-decoration: line-through;
+  text-decoration-color: var(--dead-red);
+  text-decoration-thickness: 2px;
+}
+/* "말소 · 날짜 · 원인" 라벨 — 빨강 강조. 길면 줄바꿈. */
 .easy-canceled-tag {
   align-self: flex-start;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 2px 9px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 2px 10px;
   border-radius: 999px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-strong);
-  color: var(--dead-chip);
+  background: #fff;
+  border: 1px solid var(--dead-red);
+  color: var(--dead-red);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
