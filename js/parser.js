@@ -679,6 +679,25 @@ export function markCanceled(items) {
       }
     }
   }
+
+  // (가산) 부기 전파: 주번호(N)가 말소되면 그 부기(N-1, N-2…)도 말소로 마킹.
+  // 실제 등기부 관행과 동일 — 주등기가 말소되면 부기등기도 함께 취소선 처리되고
+  // 요약장(현존)에도 나오지 않는다. (예: 을5 말소 → 을5-1·5-2 변경도 말소)
+  for (const main of items) {
+    if (!main || main.canceled !== true) continue;
+    const rank = String(main.rank || "");
+    if (!/^\d+$/.test(rank)) continue; // 전파원은 주번호만
+    const prefix = rank + "-";
+    for (const sub of items) {
+      if (!sub || sub === main) continue;
+      if (sub.gu !== main.gu) continue;
+      if (!String(sub.rank || "").startsWith(prefix)) continue;
+      if (sub.canceled === true) continue; // 이미 개별 말소된 부기는 그대로
+      sub.canceled = true;
+      sub.canceledDate = main.canceledDate !== undefined ? main.canceledDate : null;
+      sub.canceledCause = main.canceledCause !== undefined ? main.canceledCause : null;
+    }
+  }
   return items;
 }
 

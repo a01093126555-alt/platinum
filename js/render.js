@@ -253,10 +253,16 @@ function buildChips(item) {
 
 /**
  * 타임라인 엔트리 1개 → 카드(.tl-item).
+ * 가산형: opts 는 선택적 — 생략 시 기존 동작(좌측 = 날짜) 그대로(회귀 없음).
+ * opts.leftCol === "rank" 이면 좌측 컬럼을 날짜 대신 순위번호로 교체
+ * (등기부 순서 뷰 — 실제 등기부의 순위번호 열 재현). 날짜 정보는 카드 안
+ * 풀이 문장·칩에 이미 있으므로 정보 손실 없음.
  * @param {object} item  - timeline 엔트리
+ * @param {{leftCol?:('date'|'rank')}} [opts]
  * @returns {HTMLElement}
  */
-function buildTimelineItem(item) {
+function buildTimelineItem(item, opts) {
+  const leftRank = !!(opts && opts.leftCol === "rank");
   const g = getGlossary(item.purpose);
   const category = resolveCategory(item, g);
   const canceled = item.canceled === true;
@@ -265,14 +271,26 @@ function buildTimelineItem(item) {
   // CSS 가 담당. 살아있는 항목은 추가 장식 없이 의미색 강조 유지.
   const wrap = el(
     "article",
-    `tl-item cat-${category}${canceled ? " is-canceled" : ""}`
+    `tl-item cat-${category}${canceled ? " is-canceled" : ""}${leftRank ? " tl-left-rank" : ""}`
   );
 
-  // ── 좌측: 날짜 + 색 점 ─────────────────────────────
-  const dateBox = el("div", "tl-date");
-  dateBox.appendChild(el("span", "tl-dot", null));
-  dateBox.appendChild(el("time", "tl-date-text", formatDate(item.receiptDate)));
-  wrap.appendChild(dateBox);
+  if (leftRank) {
+    // ── 좌측: 순위번호(등기부 순서 뷰) — 크게 표시. 말소면 빨간 취소선(CSS). ──
+    const rankBox = el("div", "tl-rankcol");
+    if (hasVal(item.rank)) {
+      const rankText = String(item.rank).trim();
+      const rankNum = el("span", "tl-rank-big", rankText);
+      rankNum.setAttribute("aria-label", `순위번호 ${rankText}`);
+      rankBox.appendChild(rankNum);
+    }
+    wrap.appendChild(rankBox);
+  } else {
+    // ── 좌측: 날짜 + 색 점(기존 기본 동작) ─────────────
+    const dateBox = el("div", "tl-date");
+    dateBox.appendChild(el("span", "tl-dot", null));
+    dateBox.appendChild(el("time", "tl-date-text", formatDate(item.receiptDate)));
+    wrap.appendChild(dateBox);
+  }
 
   // ── 우측: 카드 ─────────────────────────────────────
   const card = el("div", "tl-card");
@@ -281,9 +299,10 @@ function buildTimelineItem(item) {
   if (canceled) card.appendChild(canceledXMark());
 
   // 헤더: 구 배지 + 순위번호 + 아이콘 + purpose 원문
+  // (좌측 컬럼이 순위번호인 뷰에서는 헤더 "순위 N" 배지가 중복 → 생략)
   const cardHead = el("div", "tl-card-head");
   if (item.gu) cardHead.appendChild(el("span", "tl-badge", item.gu));
-  if (item.rank) cardHead.appendChild(el("span", "tl-rank", `순위 ${item.rank}`));
+  if (item.rank && !leftRank) cardHead.appendChild(el("span", "tl-rank", `순위 ${item.rank}`));
   cardHead.appendChild(iconEl(category));
   cardHead.appendChild(el("span", "tl-purpose", item.purpose || ""));
   // "말소 · 날짜 · 원인" 라벨(빨강·사실어). 제목 span(.tl-purpose)에만 취소선, 라벨엔 안 그어짐.
@@ -378,12 +397,110 @@ function buildRegistryOrderView(visibleItems) {
       section.appendChild(el("p", "gu-empty", "기록된 항목 없음"));
     } else {
       const list = el("div", "timeline gu-list");
-      for (const item of items) list.appendChild(buildTimelineItem(item));
+      // 실제 등기부처럼 좌측 컬럼 = 순위번호(말소면 빨간 취소선은 CSS)
+      for (const item of items) list.appendChild(buildTimelineItem(item, { leftCol: "rank" }));
       section.appendChild(list);
     }
     wrap.appendChild(section);
   }
+  // 실제 등기부 마지막 장 형식의 "주요 등기사항 요약 (참고용)" — 현존(말소 안 됨) 사항만.
+  wrap.appendChild(buildReferenceSummary(visibleItems));
   return wrap;
+}
+
+/**
+ * 주요 등기사항 요약 (참고용) — 실제 등기부 마지막 장 형식 재현.
+ * 현존(canceled !== true) 사항만, 파싱된 사실값만 표기(없는 필드는 조각 생략 — 창작 금지).
+ * @param {Array} visibleItems - display !== false 필터 완료된 timeline 항목
+ * @returns {HTMLElement}
+ */
+function buildReferenceSummary(visibleItems) {
+  const box = el("section", "refsum");
+  box.setAttribute("aria-label", "주요 등기사항 요약 (참고용)");
+  box.appendChild(el("h3", "refsum-title", "주요 등기사항 요약 (참고용)"));
+  box.appendChild(
+    el(
+      "p",
+      "refsum-note",
+      "이 요약은 말소되지 않은 사항을 간략히 정리한 것으로, 증명서로서의 기능을 제공하지 않습니다. 실제 권리사항 파악을 위해서는 등기부등본 원본을 확인하세요."
+    )
+  );
+
+  const alive = visibleItems.filter((it) => it && it.canceled !== true);
+
+  // 현존 항목 1건 → 요약 행(순위번호 앞에 뚜렷이, 있는 필드만)
+  function rowFor(item) {
+    const row = el("div", `refsum-row${item.canceled === true ? " is-canceled" : ""}`);
+    row.appendChild(el("span", "refsum-rank", String(item.rank || "")));
+    const parts = [];
+    if (hasVal(item.purpose)) parts.push(item.purpose);
+    if (hasVal(item.receiptDate)) {
+      let receipt = formatDate(item.receiptDate);
+      if (hasVal(item.receiptNo)) receipt += ` 제${item.receiptNo}호`;
+      parts.push(receipt);
+    }
+    const amountText = formatAmount(item.amount) || (hasVal(item.amountRaw) ? item.amountRaw : null);
+    if (amountText) parts.push(`${hasVal(item.amountKind) ? item.amountKind + " " : ""}${amountText}`);
+    if (hasVal(item.party)) parts.push(item.party);
+    if (hasVal(item.caseNo)) parts.push(`사건번호 ${item.caseNo}`);
+    row.appendChild(el("span", "refsum-body", parts.join(" · ")));
+    return row;
+  }
+
+  function subSection(title, items, emptyText) {
+    const sec = el("div", "refsum-sub");
+    sec.appendChild(el("h4", "refsum-sub-title", title));
+    if (items.length === 0) {
+      sec.appendChild(el("p", "refsum-empty", emptyText));
+    } else {
+      for (const it of items) sec.appendChild(rowFor(it));
+    }
+    return sec;
+  }
+
+  // 1. 소유지분현황 (갑구) — 현재 소유자(현존 ownership 중 최신 접수일)
+  const owners = alive
+    .filter(
+      (it) =>
+        it.gu === "갑구" &&
+        it.category === "ownership" &&
+        /소유권(이전|보존)|지분/.test(it.purpose || "")
+    )
+    .slice()
+    .sort((a, b) => String(a.receiptDate || "").localeCompare(String(b.receiptDate || "")));
+  const cur = owners.length ? owners[owners.length - 1] : null;
+  const ownerSec = el("div", "refsum-sub");
+  ownerSec.appendChild(el("h4", "refsum-sub-title", "1. 소유지분현황 ( 갑구 )"));
+  if (cur) {
+    const row = el("div", "refsum-row");
+    row.appendChild(el("span", "refsum-rank", String(cur.rank || "")));
+    const bits = [];
+    if (hasVal(cur.party)) bits.push(`등기명의인 ${cur.party}`);
+    if (hasVal(cur.receiptDate)) bits.push(`${formatDate(cur.receiptDate)} 취득`);
+    row.appendChild(el("span", "refsum-body", bits.join(" · ")));
+    ownerSec.appendChild(row);
+  } else {
+    ownerSec.appendChild(el("p", "refsum-empty", "확인 정보 없음"));
+  }
+  box.appendChild(ownerSec);
+
+  // 2. 소유지분을 제외한 소유권에 관한 사항 (갑구) — 현존 가압류/압류/경매/가처분/가등기 등
+  const gapRights = alive
+    .filter((it) => it.gu === "갑구" && it.category !== "ownership")
+    .slice()
+    .sort((a, b) => compareRank(a.rank, b.rank));
+  box.appendChild(
+    subSection("2. 소유지분을 제외한 소유권에 관한 사항 ( 갑구 )", gapRights, "기록사항 없음")
+  );
+
+  // 3. (근)저당권 및 전세권 등 (을구) — 현존 근저당·변경·전세권 등
+  const eulRights = alive
+    .filter((it) => it.gu === "을구")
+    .slice()
+    .sort((a, b) => compareRank(a.rank, b.rank));
+  box.appendChild(subSection("3. (근)저당권 및 전세권 등 ( 을구 )", eulRights, "기록사항 없음"));
+
+  return box;
 }
 
 /**

@@ -1000,3 +1000,99 @@ body {
 @media (max-width: 600px) {
   .support-box { padding: 16px 12px; }
 }
+
+/* ==========================================================================
+   등기부 순서 뷰 — 좌측 순위번호 컬럼(실제 등기부 형태) + 주요 등기사항 요약(참고용)
+   ========================================================================== */
+
+/* 좌측 = 순위번호(모바일에서도 가로 배치 — 번호 열이 좁아 안전) */
+.tl-item.tl-left-rank {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+}
+.tl-rankcol {
+  flex: 0 0 52px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14px;
+  border-right: 1px solid var(--border);
+}
+.tl-rank-big {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  word-break: keep-all;
+}
+/* 말소된 번호: 실제 등기부처럼 빨간 취소선 */
+.tl-item.is-canceled .tl-rank-big {
+  color: var(--c-restraint);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+.tl-item.tl-left-rank .tl-card { flex: 1; min-width: 0; }
+
+@media (min-width: 1280px) {
+  /* 1280 grid(132px 1fr)는 날짜 뷰용 — 순위번호 뷰는 좁은 열 유지 */
+  .tl-item.tl-left-rank {
+    display: flex;
+  }
+}
+
+/* ---------- 주요 등기사항 요약 (참고용) ---------- */
+.refsum {
+  margin-top: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.refsum-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  text-align: center;
+}
+.refsum-note {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  line-height: 1.5;
+}
+.refsum-sub { margin-top: 12px; }
+.refsum-sub-title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.refsum-row {
+  display: flex;
+  gap: 10px;
+  padding: 7px 2px;
+  border-bottom: 1px dotted var(--border);
+  font-size: 0.95rem;
+  align-items: baseline;
+}
+.refsum-row:last-child { border-bottom: 0; }
+.refsum-rank {
+  flex: 0 0 44px;
+  font-weight: 700;
+  text-align: center;
+}
+.refsum-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  line-height: 1.55;
+}
+.refsum-empty {
+  margin: 4px 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
