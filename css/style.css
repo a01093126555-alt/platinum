@@ -287,6 +287,15 @@ body {
 .tag-gap   { background: #e8f1fd; color: var(--gu-gap); }
 .tag-eul   { background: #f0edfb; color: var(--gu-eul); }
 
+/* 교육 블록(3분 이해) 안에서는 표제부/갑구/을구 태그를 크게(사용자 확정) */
+.edu-card .tag {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+}
+.edu-card .edu-h b { font-size: 16px; }
+
 /* ---------- 2층 · 헤더 + 면책 ---------- */
 .sec-title { font-size: 18px; font-weight: 500; margin: 0 0 8px; }
 .sec-title .ref { font-size: 13px; color: #9aa0aa; font-weight: 400; }

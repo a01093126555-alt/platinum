@@ -252,10 +252,11 @@ const EDU_CARDS = [
   },
 ];
 
-/** 1층 교육 블록 — <details class="edu" open> + 카드 3개. 결과 맨 앞 1회. */
+/** 1층 교육 블록 — <details class="edu"> + 카드 3개. 결과 맨 앞 1회.
+ *  사용자 확정(2026-07): 시작은 접힌 상태(클릭 시 펼침). */
 function buildEduBlock() {
   const details = el("details", "edu");
-  details.open = true;
+  details.open = false;
 
   const summary = el("summary");
   summary.appendChild(bookIconEl());
