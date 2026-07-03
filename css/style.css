@@ -24,7 +24,10 @@
   --accent:        var(--c-ownership);
   --drop-active:   #eff6ff;
 
-  /* 말소(취소) 표현 전용 회색(설계서 4절) — 판단색(빨강/주황) 금지 */
+  /* 말소(취소) 표현 — 사용자 확정: 본문 흐림 없이 빨간 취소선·X·큰 '말소' 표기.
+     --dead-red 는 판단색이 아니라 "지워진 기록" 사실 표기 전용(면책 강조와 동일 톤).
+     --dead/--dead-chip 회색은 중학생 모드 말소 태그 등 기존 요소가 계속 사용. */
+  --dead-red:      #c92a2a;
   --dead:          #b3b8c0;
   --dead-chip:     #9aa0aa;
 
@@ -335,12 +338,22 @@ body {
 }
 .fact-sub { font-size: 12px; color: #9aa0aa; margin: 10px 0 2px; }
 
-/* ---------- 갑구·을구 항목(유효/말소 대비 — 화면의 유일한 대비) ---------- */
-.reg-item { padding: 10px 0; border-top: 1px solid #f1f2f4; }
+/* ---------- 갑구·을구 항목 ----------
+   좌측 고정폭 날짜 컬럼 + 우측 본문(그리드 — 통합본 카드와 같은 위치감).
+   유효 = 선명한 본문 + 좌측 날짜만 / 말소 = 본문 똑같이 선명 + 빨간 취소선 +
+   빨간 X 마크 + 좌측 날짜 아래 큰 '말소'(+작게 원인). 흐림 없음(사용자 확정). */
+.reg-item {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr); /* 좌측 고정폭 + 카드 min-width 0 */
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #f1f2f4;
+}
 .reg-item:first-of-type { border-top: 0; }
+.reg-main { min-width: 0; } /* 가로 오버플로 방지(그리드 자식) */
 .reg-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.rank { font-size: 12px; color: #9aa0aa; min-width: 20px; }
-.purpose { font-size: 15px; font-weight: 500; word-break: keep-all; }
+.rank { font-size: 12px; color: #9aa0aa; white-space: nowrap; }
+.purpose { font-size: 15px; font-weight: 500; color: #1f2430; word-break: keep-all; }
 .reg-detail {
   font-size: 13px;
   color: #5b6270;
@@ -359,35 +372,54 @@ body {
   word-break: keep-all;
 }
 
-/* 유효: 진한 글씨 — 별도 장식 없음 */
-.reg-item.active .purpose { color: #1f2430; }
-
-/* 말소: 흐린 회색 + 회색 취소선(빨강 아님) — 순위번호도 동일 규칙 */
+/* 말소: 등기목적에만 빨간 취소선 — 본문색·순위·상세는 유효와 동일(흐림 제거) */
 .reg-item.cancelled .purpose {
-  color: var(--dead);
   text-decoration: line-through;
-  text-decoration-color: currentColor;
+  text-decoration-color: var(--dead-red);
+  text-decoration-thickness: 2px;
 }
-.reg-item.cancelled .rank {
-  color: var(--dead);
-  text-decoration: line-through;
-  text-decoration-color: currentColor;
-}
-.reg-item.cancelled .reg-detail,
-.reg-item.cancelled .reg-plain { color: var(--dead); }
 
-/* 회색 "말소 · YY.MM.DD" 칩 — 기본 뷰(reg-item)·통합본 카드 공용 */
-.chip-dead {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--dead-chip);
-  background: #fff;
-  border: 1px solid #e6e8eb;
-  border-radius: 5px;
-  padding: 2px 8px;
-  margin-left: auto;
-  white-space: nowrap;
+/* ---------- 좌측 날짜 컬럼(등기부순서 .reg-datecol / 통합본 .tl-datecol 공용) ---------- */
+.reg-datecol,
+.tl-datecol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
 }
+.datecol-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.4;
+  overflow-wrap: anywhere;   /* 좁은 컬럼 → YYYY.MM.DD 줄바꿈 허용 */
+}
+/* 날짜 아래 큰 '말소' — 말소의 주 신호(굵게·빨간 톤) */
+.datecol-dead {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dead-red);
+  line-height: 1.25;
+}
+/* 그 아래 작게 등기원인(해지/해제/취하 등 — 등기부 기재 그대로) */
+.datecol-cause {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* 빨간 X 마크(SVG) — 등기부순서 행·통합본 카드 공용 */
+.x-dead {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--dead-red);
+}
+.x-dead svg { display: block; }
+.reg-head .x-dead { margin-left: auto; } /* 행 우측 정렬 */
+.tl-card > .x-dead { position: absolute; top: 12px; right: 12px; }
 
 /* ---------- 3층 · CTA ---------- */
 .cta {
@@ -428,11 +460,13 @@ body {
   flex-direction: column;
   gap: 8px;
 }
-.tl-date { display: flex; align-items: center; gap: 8px; }
+/* 좌측: 점 + 날짜 컬럼(말소면 날짜 아래 큰 '말소'+원인 — 세로 스택) */
+.tl-date { display: flex; align-items: flex-start; gap: 8px; }
 .tl-dot {
   flex: 0 0 auto;
   width: 12px;
   height: 12px;
+  margin-top: 5px;           /* 첫 줄(날짜) 텍스트와 시각 정렬 */
   border-radius: 50%;
   background: var(--cat, var(--c-etc));
 }
@@ -525,29 +559,17 @@ body {
 .tl-item.gu-gap { --cat: var(--gu-gap); }
 .tl-item.gu-eul { --cat: var(--gu-eul); }
 
-/* ---------- 말소(취소) 항목 — 시인성 규칙(설계서 4절): 유일한 대비
-   유효 = 진한 글씨(장식 없음) / 말소 = 전체 흐림 + 회색 취소선 + 회색 "말소·날짜" 칩.
-   색만 의존 금지 → 취소선(형태) + "말소" 텍스트 칩 동반. 판단색(빨강) 없음. ---------- */
-/* 색 띠·점·아이콘 회색화(--cat) — gu 분류색보다 뒤에 선언(말소 우선). */
-.tl-item.is-canceled { --cat: var(--dead); }
-/* 전체 흐림(본문 대비는 유지선 안에서) */
-.tl-item.is-canceled .tl-card { opacity: 0.85; }
-/* 취소선은 제목 텍스트 span 에만 — 회색(currentColor). */
+/* ---------- 말소(취소) 항목 — 통합본 카드(사용자 확정 표현)
+   본문은 유효와 똑같이 선명(흐림·opacity 약화·회색화 전부 제거 — "흐리면 더 복잡" 피드백).
+   말소 신호 = 좌측 날짜 아래 큰 '말소'(+원인) + 제목 빨간 취소선 + 카드 우측 빨간 X.
+   색만 의존 금지 → 취소선(형태) + '말소' 텍스트 동반. ---------- */
 .tl-item.is-canceled .tl-purpose {
-  color: var(--dead);
   text-decoration: line-through;
-  text-decoration-color: currentColor;
+  text-decoration-color: var(--dead-red);
+  text-decoration-thickness: 2px;
 }
-.tl-item.is-canceled .tl-basic,
-.tl-item.is-canceled .tl-term,
-.tl-item.is-canceled .tl-chip,
-.tl-item.is-canceled .tl-date-text { color: var(--dead); }
-/* 순위번호도 말소면 회색 취소선(빨강 아님). 두 뷰 공통. */
-.is-canceled .tl-rank {
-  color: var(--dead);
-  text-decoration: line-through;
-  text-decoration-color: currentColor;
-}
+/* 우측 상단 X 마크와 제목이 겹치지 않게 여유 패딩 */
+.tl-item.is-canceled .tl-card { padding-right: 38px; }
 
 .tl-empty {
   background: var(--surface-alt);
@@ -686,7 +708,8 @@ body {
     padding-top: 14px;
     text-align: right;
   }
-  .tl-date-text { order: -1; }
+  /* 날짜 컬럼(날짜+말소+원인 스택)을 점 왼쪽에, 내용은 우측 정렬 */
+  .tl-datecol { order: -1; align-items: flex-end; }
 }
 
 /* ==========================================================================
@@ -862,7 +885,7 @@ body {
 }
 
 /* 말소(지워짐) 항목: 말풍선 약화 + 회색 테두리 + 회색 "말소" 태그.
-   ★--cat 를 건드리지 않고 border-left-color 만 회색으로 → 마스코트 색 누수 방지.
+   [주의] --cat 를 건드리지 않고 border-left-color 만 회색으로 → 마스코트 색 누수 방지.
    취소선은 본문에 쓰지 않음(읽기 방해). 판단색(빨강) 없음 — 조용한 회색만. */
 .easy-item.is-canceled { border-left-color: var(--c-etc); }
 .easy-item.is-canceled .bubble {

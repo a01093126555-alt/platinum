@@ -95,9 +95,13 @@ function iconEl(category) {
 }
 
 // ---------------------------------------------------------------------------
-// 말소(취소) 표현 — 시인성 규칙(설계서 4절): 화면의 유일한 대비.
-//   유효 = 진한 글씨(장식 없음) / 말소 = 흐린 회색 + 취소선 + 회색 "말소 · 날짜" 칩.
-//   판단색(빨강·주황) 금지 — 취소선·칩 모두 조용한 회색(사실의 시각적 번역일 뿐).
+// 말소(취소) 표현 — 사용자 확정(피드백 반영):
+//   유효 = 선명한 본문(장식 없음, 좌측엔 날짜만).
+//   말소 = 본문은 유효와 똑같이 선명하게 두고,
+//     ① 등기목적(purpose)에 빨간 취소선 ② 카드/행 우측 빨간 X 마크(SVG)
+//     ③ 좌측 날짜 바로 아래 큰 '말소' 표기(+있으면 작게 등기원인).
+//   글자 흐림(회색화)·opacity 약화는 쓰지 않는다("흐리면 더 복잡해 보임" 피드백).
+//   빨간색은 법적 판단이 아니라 "지워진 기록"이라는 사실 표기(사용자 확정 표현).
 //   canceledDate/canceledCause 는 파서가 부착하는 가산 필드(없을 수 있음 → 안전 처리).
 // ---------------------------------------------------------------------------
 
@@ -116,25 +120,43 @@ function canceledLabelText(item) {
 }
 
 /**
- * ISO 날짜 → "YY.MM.DD" 축약(설계서 5-4 칩 형식). 형식 밖이면 formatDate 폴백.
+ * ISO 날짜 → "YYYY.MM.DD"(좌측 날짜 컬럼용 — 좁은 컬럼에서 줄바꿈 허용).
+ * 형식 밖이면 formatDate 폴백.
  * @param {string} iso
  * @returns {string}
  */
-function shortDate(iso) {
+function dotDate(iso) {
   const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(iso == null ? "" : iso).trim());
   if (!m) return formatDate(iso);
   const p2 = (n) => String(n).padStart(2, "0");
-  return `${m[1].slice(2)}.${p2(m[2])}.${p2(m[3])}`;
+  return `${m[1]}.${p2(m[2])}.${p2(m[3])}`;
 }
 
 /**
- * 회색 말소 칩 텍스트 — "말소 · YY.MM.DD"(날짜 없으면 "말소"만).
+ * 좌측 날짜 컬럼에 말소 표기 부착 — 큰 '말소'(.datecol-dead) + 있으면 그 아래
+ * 작게 등기원인(.datecol-cause — 해지/해제/취하 등 등기부 기재 그대로).
+ * 유효 항목이면 아무것도 붙이지 않는다(날짜만 — 장식 없음).
+ * @param {HTMLElement} col  - 좌측 날짜 컬럼 요소
  * @param {object} item
- * @returns {string}
  */
-function chipDeadText(item) {
-  const d = shortDate(item && item.canceledDate);
-  return d ? `말소 · ${d}` : "말소";
+function appendCancelMark(col, item) {
+  if (!item || item.canceled !== true) return;
+  col.appendChild(el("span", "datecol-dead", "말소"));
+  if (hasVal(item.canceledCause)) {
+    col.appendChild(el("span", "datecol-cause", String(item.canceledCause).trim()));
+  }
+}
+
+/** 말소 표시용 빨간 X 마크(인라인 SVG — 이모지 금지). 장식 → aria-hidden. */
+function canceledXMark() {
+  const span = el("span", "x-dead");
+  span.setAttribute("aria-hidden", "true");
+  span.innerHTML =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
+    'stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
+    '<path d="M5 5l14 14"/><path d="M19 5l-14 14"/>' +
+    "</svg>";
+  return span;
 }
 
 // ---------------------------------------------------------------------------
@@ -382,9 +404,9 @@ function buildChips(item) {
 
 /**
  * 타임라인 엔트리 1개 → 카드(.tl-item). (통합본 뷰 전용)
- * 좌측 색 점/띠는 카테고리 의미색 대신 구 분류색(갑구=파랑, 을구=보라)만 사용
- * — 판단 암시색(빨강/주황)을 화면에서 제거. 말소는 회색 흐림 + 회색 취소선 +
- * 회색 "말소 · 날짜" 칩(설계서 4절 — 화면의 유일한 대비).
+ * 좌측 색 점/띠는 구 분류색(갑구=파랑, 을구=보라)만 사용.
+ * 말소는 흐림 없이(본문 선명) — 좌측 날짜 아래 큰 '말소'(+원인) +
+ * purpose 빨간 취소선 + 카드 우측 빨간 X 마크(사용자 확정 표현).
  * @param {object} item  - timeline 엔트리
  * @returns {HTMLElement}
  */
@@ -395,16 +417,19 @@ function buildTimelineItem(item) {
   const guClass =
     item.gu === "갑구" ? " gu-gap" : item.gu === "을구" ? " gu-eul" : "";
 
-  // 말소 항목: wrap 에 is-canceled 추가. 색(--cat 회색화)·형태(취소선·흐림)는 CSS 담당.
+  // 말소 항목: wrap 에 is-canceled 추가. 취소선(빨강) 형태는 CSS 담당 — 흐림 없음.
   const wrap = el(
     "article",
     `tl-item cat-${category}${guClass}${canceled ? " is-canceled" : ""}`
   );
 
-  // ── 좌측: 날짜 + 구 분류색 점 ─────────────
+  // ── 좌측: 구 분류색 점 + 날짜 컬럼(말소면 날짜 아래 큰 '말소'+원인) ─────────────
   const dateBox = el("div", "tl-date");
   dateBox.appendChild(el("span", "tl-dot", null));
-  dateBox.appendChild(el("time", "tl-date-text", formatDate(item.receiptDate)));
+  const dateCol = el("div", "tl-datecol");
+  dateCol.appendChild(el("time", "tl-date-text", formatDate(item.receiptDate)));
+  appendCancelMark(dateCol, item);
+  dateBox.appendChild(dateCol);
   wrap.appendChild(dateBox);
 
   // ── 우측: 카드 ─────────────────────────────────────
@@ -416,9 +441,11 @@ function buildTimelineItem(item) {
   if (item.rank) cardHead.appendChild(el("span", "tl-rank", `순위 ${item.rank}`));
   cardHead.appendChild(iconEl(category));
   cardHead.appendChild(el("span", "tl-purpose", item.purpose || ""));
-  // 회색 말소 칩("말소 · YY.MM.DD") — 취소선은 제목 span(.tl-purpose)에만.
-  if (canceled) cardHead.appendChild(el("span", "chip-dead", chipDeadText(item)));
   card.appendChild(cardHead);
+
+  // 말소: 카드 우측 상단 빨간 X 마크(취소선은 제목 span(.tl-purpose)에만 — CSS).
+  // 회색 "말소 · 날짜" 칩은 좌측 큰 '말소' 표기와 중복이라 제거(좌측이 주 신호).
+  if (canceled) card.appendChild(canceledXMark());
 
   // 층2 보조표기: 한자 + 영문 (미수록 시 자료불충분)
   const term = lookupPurposeTerm(item.purpose);
@@ -441,7 +468,7 @@ function buildTimelineItem(item) {
   const chips = buildChips(item);
   if (chips) card.appendChild(chips);
 
-  // 말소 표시는 헤더의 "말소됨" 칩 + 제목 취소선 + 카드 약화로 대체(중복 꼬리표 제거).
+  // 말소 표시는 좌측 큰 '말소'(+원인) + 제목 빨간 취소선 + 빨간 X 마크로 통일.
 
   wrap.appendChild(card);
   return wrap;
@@ -486,9 +513,12 @@ const GU_SECTIONS = [
 ];
 
 /**
- * 갑구/을구 항목 1건 → .reg-item (설계서 5-4).
- * reg-head(순위 + 등기목적 + 말소칩) + reg-detail(접수일·권리자·금액·사건번호 —
- * 있는 것만 " · " 연결) + 해석 문장(층1, 조용한 회색 — 이 도구의 핵심 가치라 유지).
+ * 갑구/을구 항목 1건 → .reg-item (설계서 5-4 + 사용자 피드백 반영).
+ * 좌측 날짜 컬럼(.reg-datecol — 접수일 YYYY.MM.DD, 말소면 그 아래 큰 '말소'+원인)
+ * + 우측 본문(.reg-main): reg-head("순위 N" + 등기목적 + 말소 X 마크) +
+ * reg-detail(접수번호·권리자·금액·사건번호 — 있는 것만 " · " 연결) +
+ * 해석 문장(층1, 조용한 회색 — 이 도구의 핵심 가치라 유지).
+ * 말소여도 본문은 유효와 같은 선명한 색(흐림 없음) — 표시는 취소선·X·좌측 '말소'만.
  * @param {object} item
  * @returns {HTMLElement}
  */
@@ -496,19 +526,28 @@ function buildRegItem(item) {
   const canceled = item.canceled === true;
   const row = el("div", `reg-item ${canceled ? "cancelled" : "active"}`);
 
-  const head = el("div", "reg-head");
-  if (hasVal(item.rank)) head.appendChild(el("span", "rank", String(item.rank).trim()));
-  head.appendChild(el("span", "purpose", item.purpose || ""));
-  if (canceled) head.appendChild(el("span", "chip-dead", chipDeadText(item)));
-  row.appendChild(head);
+  // ── 좌측: 접수일 날짜 컬럼(통합본과 같은 위치감). 말소면 큰 '말소'+원인 표기.
+  const dateCol = el("div", "reg-datecol");
+  const d = dotDate(item.receiptDate);
+  if (d) dateCol.appendChild(el("time", "datecol-date", d));
+  appendCancelMark(dateCol, item);
+  row.appendChild(dateCol);
 
-  // 상세: 접수일 · 권리자 · 금액 · 사건번호 — 있는 것만(빈칸 노출 금지)
-  const parts = [];
-  if (hasVal(item.receiptDate)) {
-    let receipt = formatDate(item.receiptDate);
-    if (hasVal(item.receiptNo)) receipt += ` 제${item.receiptNo}호`;
-    parts.push(receipt);
+  // ── 우측: 본문 ──
+  const main = el("div", "reg-main");
+
+  const head = el("div", "reg-head");
+  if (hasVal(item.rank)) {
+    head.appendChild(el("span", "rank", `순위 ${String(item.rank).trim()}`));
   }
+  head.appendChild(el("span", "purpose", item.purpose || ""));
+  if (canceled) head.appendChild(canceledXMark()); // 행 우측 빨간 X(사용자 확정 표현)
+  main.appendChild(head);
+
+  // 상세: 접수번호 · 권리자 · 금액 · 사건번호 — 있는 것만(빈칸 노출 금지).
+  // 접수일 자체는 좌측 컬럼으로 이동(중복 표기 제거) — 접수번호만 여기 유지.
+  const parts = [];
+  if (hasVal(item.receiptNo)) parts.push(`접수 제${String(item.receiptNo).trim()}호`);
   if (hasVal(item.party)) parts.push(String(item.party).trim());
   const amountText =
     formatAmount(item.amount) || (hasVal(item.amountRaw) ? item.amountRaw : null);
@@ -518,12 +557,13 @@ function buildRegItem(item) {
     );
   }
   if (hasVal(item.caseNo)) parts.push(`사건번호 ${String(item.caseNo).trim()}`);
-  if (parts.length > 0) row.appendChild(el("div", "reg-detail", parts.join(" · ")));
+  if (parts.length > 0) main.appendChild(el("div", "reg-detail", parts.join(" · ")));
 
   // 층1 해석 문장(사실 풀이) — reg-detail 아래 작은 회색 줄
   const g = getGlossary(item.purpose);
-  row.appendChild(el("p", "reg-plain", g.basic(item)));
+  main.appendChild(el("p", "reg-plain", g.basic(item)));
 
+  row.appendChild(main);
   return row;
 }
 
