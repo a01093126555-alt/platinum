@@ -377,9 +377,14 @@ body {
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr); /* 좌측 고정폭 + 카드 min-width 0 */
   gap: 12px;
-  padding: 10px 0;
-  border-top: 1px solid #f1f2f4;
+  padding: 10px 12px;
+  border-top: 0;
+  border-radius: 10px;
+  margin: 8px 0;
 }
+/* 유효/말소 바탕색 구분(사용자 확정): 살아있음=파랑 / 말소=베이지 */
+.reg-item.active    { background: #e7f1fd; }
+.reg-item.cancelled { background: #f6efdf; }
 .reg-item:first-of-type { border-top: 0; }
 .reg-main { min-width: 0; } /* 가로 오버플로 방지(그리드 자식) */
 .reg-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -515,6 +520,9 @@ body {
   border-radius: var(--radius-sm);
   padding: 14px;
 }
+/* 통합본도 유효/말소 바탕색 구분(사용자 확정): 살아있음=파랑 / 말소=베이지 */
+.tl-item:not(.is-canceled) .tl-card { background: #e7f1fd; }
+.tl-item.is-canceled .tl-card       { background: #f6efdf; }
 .tl-card-head {
   display: flex;
   flex-wrap: wrap;
