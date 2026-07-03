@@ -14,6 +14,13 @@ import { getGlossary, formatAmount, formatDate, lookupTerm } from "./glossary.js
 import { mascotSvg } from "./mascot.js";
 
 // ---------------------------------------------------------------------------
+// 운영자 설정 — 3층 CTA 링크(설계서 5-5).
+//   url 이 빈 문자열이면 그 줄 자체를 렌더하지 않는다(빈 링크 금지).
+//   둘 다 비어 있으면 CTA 블록 전체를 생략한다.
+// ---------------------------------------------------------------------------
+const CTA = { consultUrl: "", lessonUrl: "" };
+
+// ---------------------------------------------------------------------------
 // 소형 DOM 헬퍼
 // ---------------------------------------------------------------------------
 
@@ -23,6 +30,13 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text != null && text !== "") node.textContent = text;
   return node;
+}
+
+/** 값이 비면 "자료불충분"으로 대체(창작 금지). */
+function displayValue(v) {
+  if (v == null) return "자료불충분";
+  const s = String(v).trim();
+  return s === "" ? "자료불충분" : s;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,14 +95,15 @@ function iconEl(category) {
 }
 
 // ---------------------------------------------------------------------------
-// 말소(취소) 표현 — 등기부 관행: 빨간 X + "말소 · 날짜 · 원인"
+// 말소(취소) 표현 — 시인성 규칙(설계서 4절): 화면의 유일한 대비.
+//   유효 = 진한 글씨(장식 없음) / 말소 = 흐린 회색 + 취소선 + 회색 "말소 · 날짜" 칩.
+//   판단색(빨강·주황) 금지 — 취소선·칩 모두 조용한 회색(사실의 시각적 번역일 뿐).
 //   canceledDate/canceledCause 는 파서가 부착하는 가산 필드(없을 수 있음 → 안전 처리).
-//   X 마크는 장식(aria-hidden) — 의미는 "말소" 텍스트가 동반하므로 색만 의존 X(접근성 OK).
 // ---------------------------------------------------------------------------
 
 /**
- * 말소 라벨 텍스트. "말소 · {날짜} · {원인}" — 없는 부분은 안전 생략.
- * 원인 없으면 "말소 · {날짜}", 날짜도 없으면 "말소".
+ * 말소 라벨 텍스트(전체형 — 중학생 모드 꼬리표용).
+ * "말소 · {날짜} · {원인}" — 없는 부분은 안전 생략.
  * @param {object} item
  * @returns {string}
  */
@@ -100,16 +115,26 @@ function canceledLabelText(item) {
   return parts.join(" · ");
 }
 
-/** 크고 또렷한 빨간 X 마크(교차하는 두 선). 장식 → aria-hidden. 본문은 안 가림(코너 배치·CSS). */
-function canceledXMark() {
-  const span = el("span", "canceled-x");
-  span.setAttribute("aria-hidden", "true");
-  span.innerHTML =
-    '<svg viewBox="0 0 48 48" width="48" height="48" fill="none" ' +
-    'stroke="currentColor" stroke-width="6" stroke-linecap="round">' +
-    '<path d="M8 8 L40 40"/><path d="M40 8 L8 40"/>' +
-    "</svg>";
-  return span;
+/**
+ * ISO 날짜 → "YY.MM.DD" 축약(설계서 5-4 칩 형식). 형식 밖이면 formatDate 폴백.
+ * @param {string} iso
+ * @returns {string}
+ */
+function shortDate(iso) {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(iso == null ? "" : iso).trim());
+  if (!m) return formatDate(iso);
+  const p2 = (n) => String(n).padStart(2, "0");
+  return `${m[1].slice(2)}.${p2(m[2])}.${p2(m[3])}`;
+}
+
+/**
+ * 회색 말소 칩 텍스트 — "말소 · YY.MM.DD"(날짜 없으면 "말소"만).
+ * @param {object} item
+ * @returns {string}
+ */
+function chipDeadText(item) {
+  const d = shortDate(item && item.canceledDate);
+  return d ? `말소 · ${d}` : "말소";
 }
 
 // ---------------------------------------------------------------------------
@@ -163,47 +188,151 @@ function lookupPurposeTerm(purpose) {
 }
 
 // ---------------------------------------------------------------------------
-// 표제부 헤더 (항상 표시)
+// 1층 — 교육 블록 "등기부등본 3분 이해" (설계서 5-1)
+//   네이티브 <details open> — JS·라이브러리 불필요(설계서 7절).
+//   아이콘은 작은 인라인 SVG 책(이모지 금지 — 절대원칙).
 // ---------------------------------------------------------------------------
 
-/** 값이 비면 "자료불충분"으로 대체(창작 금지). */
-function displayValue(v) {
-  if (v == null) return "자료불충분";
-  const s = String(v).trim();
-  return s === "" ? "자료불충분" : s;
+/** 작은 인라인 SVG 책 아이콘(장식 → aria-hidden). */
+function bookIconEl() {
+  const span = el("span", "edu-icon");
+  span.setAttribute("aria-hidden", "true");
+  span.innerHTML =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+    'stroke-linejoin="round">' +
+    '<path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/>' +
+    '<path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/>' +
+    '<path d="M3 6l0 13"/><path d="M12 6l0 13"/><path d="M21 6l0 13"/>' +
+    "</svg>";
+  return span;
+}
+
+/** 교육 카드 3장 — 설계서 9절 복붙 문구 그대로(사실 설명, 판단 없음). */
+const EDU_CARDS = [
+  {
+    tag: "tag-title",
+    name: "표제부",
+    head: "무엇인가",
+    body: "소재지 · 면적 · 구조. 이 부동산의 기본 신원입니다.",
+  },
+  {
+    tag: "tag-gap",
+    name: "갑구",
+    head: "누구 것인가",
+    body: "소유자, 그리고 소유권을 흔드는 일(압류 · 가압류 · 경매).",
+  },
+  {
+    tag: "tag-eul",
+    name: "을구",
+    head: "빚이 얼마인가",
+    body: "근저당권 · 전세권 등. 이 집이 담보로 진 부담입니다.",
+  },
+];
+
+/** 1층 교육 블록 — <details class="edu" open> + 카드 3개. 결과 맨 앞 1회. */
+function buildEduBlock() {
+  const details = el("details", "edu");
+  details.open = true;
+
+  const summary = el("summary");
+  summary.appendChild(bookIconEl());
+  summary.appendChild(document.createTextNode(" 등기부등본 3분 이해"));
+  details.appendChild(summary);
+
+  const cards = el("div", "edu-cards");
+  for (const c of EDU_CARDS) {
+    const card = el("div", "edu-card");
+    const h = el("div", "edu-h");
+    h.appendChild(el("span", `tag ${c.tag}`, c.name));
+    h.appendChild(el("b", null, c.head));
+    card.appendChild(h);
+    card.appendChild(el("p", null, c.body));
+    cards.appendChild(card);
+  }
+  details.appendChild(cards);
+  return details;
+}
+
+// ---------------------------------------------------------------------------
+// 2층 ① — 표제부 블록 (설계서 5-3)
+//   propertyType(파서 제공 예정: "collective"|"single"|"land") 우선,
+//   없으면 buildingType("집합건물"|"건물"|"토지")으로 추정.
+//   null 필드·블록은 아예 그리지 않는다(빈 칸 노출 금지 — 설계서 3절).
+// ---------------------------------------------------------------------------
+
+/** propertyType 결정 — 파서 값 우선, 없으면 buildingType 으로 추정. */
+function resolvePropertyType(p) {
+  const t = p && p.propertyType;
+  if (t === "collective" || t === "single" || t === "land") return t;
+  const bt = p && hasVal(p.buildingType) ? String(p.buildingType) : "";
+  if (bt.includes("집합")) return "collective";
+  if (bt.includes("토지")) return "land";
+  return "single";
+}
+
+/** 전유부분 건물번호 — 파서 필드(unitNo) 우선, 없으면 주소의 "제N층 제N호"에서 추출. */
+function extractUnitNo(p) {
+  if (p && hasVal(p.unitNo)) return String(p.unitNo).trim();
+  const addr = p && hasVal(p.address) ? String(p.address) : "";
+  const m = /제\s*\d+\s*층\s*제?\s*[\d-]+호/.exec(addr);
+  return m ? m[0].replace(/\s+/g, " ") : null;
+}
+
+/** fact-row 1줄(라벨 + 값). 값이 없으면 null → 행 자체 생략. */
+function factRow(label, value) {
+  if (!hasVal(value)) return null;
+  const row = el("div", "fact-row");
+  row.appendChild(el("span", null, label));
+  row.appendChild(el("b", null, String(value).trim()));
+  return row;
 }
 
 /**
- * property → 표제부 헤더 섹션.
+ * property → 표제부 블록(.reg-block). 표시할 사실이 하나도 없으면 null(블록 생략).
  * @param {object} property
- * @returns {HTMLElement}
+ * @returns {(HTMLElement|null)}
  */
 function buildPropertyHeader(property) {
   const p = property || {};
-  const wrap = el("section", "pyo-header");
-  wrap.setAttribute("aria-label", "표제부");
+  const type = resolvePropertyType(p);
 
-  const head = el("div", "pyo-head");
-  head.appendChild(el("span", "pyo-label", "표제부"));
-  wrap.appendChild(head);
+  const rows = [];
+  const push = (r) => {
+    if (r) rows.push(r);
+  };
 
-  const rows = [
-    ["주소", p.address],
-    ["전유면적", p.area],
-    ["대지지분", p.landShare],
-    ["건물유형", p.buildingType],
-    ["고유번호", p.uid],
-    ["열람일시", p.viewedAt],
-  ];
+  push(factRow("소재지", p.address));
+  push(factRow("구조", p.structure)); // 파서 제공 시에만(없으면 생략)
+  push(factRow("면적", p.area));
 
-  const grid = el("dl", "pyo-grid");
-  for (const [label, value] of rows) {
-    const row = el("div", "pyo-row");
-    row.appendChild(el("dt", "pyo-key", label));
-    row.appendChild(el("dd", "pyo-val", displayValue(value)));
-    grid.appendChild(row);
+  // 집합건물일 때만 전유부분/대지권 블록 추가(설계서 3절 — null 이면 아예 미출력)
+  if (type === "collective") {
+    const unitNo = extractUnitNo(p);
+    if (unitNo) {
+      rows.push(el("div", "fact-sub", "전유부분"));
+      push(factRow("건물번호", unitNo));
+    }
+    if (hasVal(p.landShare)) {
+      rows.push(el("div", "fact-sub", "대지권"));
+      push(factRow("대지권 비율", p.landShare));
+    }
   }
-  wrap.appendChild(grid);
+
+  push(factRow("고유번호", p.uid));
+  push(factRow("열람일시", p.viewedAt));
+
+  if (rows.length === 0) return null;
+
+  const wrap = el("section", "reg-block reg-block-pyo");
+  wrap.setAttribute("aria-label", "표제부");
+  const label = el("div", "reg-label");
+  label.appendChild(el("span", "tag tag-title", "표제부"));
+  label.appendChild(
+    document.createTextNode(type === "land" ? " 토지의 표시" : " 부동산의 표시")
+  );
+  wrap.appendChild(label);
+  for (const r of rows) wrap.appendChild(r);
   return wrap;
 }
 
@@ -252,61 +381,43 @@ function buildChips(item) {
 }
 
 /**
- * 타임라인 엔트리 1개 → 카드(.tl-item).
- * 가산형: opts 는 선택적 — 생략 시 기존 동작(좌측 = 날짜) 그대로(회귀 없음).
- * opts.leftCol === "rank" 이면 좌측 컬럼을 날짜 대신 순위번호로 교체
- * (등기부 순서 뷰 — 실제 등기부의 순위번호 열 재현). 날짜 정보는 카드 안
- * 풀이 문장·칩에 이미 있으므로 정보 손실 없음.
+ * 타임라인 엔트리 1개 → 카드(.tl-item). (통합본 뷰 전용)
+ * 좌측 색 점/띠는 카테고리 의미색 대신 구 분류색(갑구=파랑, 을구=보라)만 사용
+ * — 판단 암시색(빨강/주황)을 화면에서 제거. 말소는 회색 흐림 + 회색 취소선 +
+ * 회색 "말소 · 날짜" 칩(설계서 4절 — 화면의 유일한 대비).
  * @param {object} item  - timeline 엔트리
- * @param {{leftCol?:('date'|'rank')}} [opts]
  * @returns {HTMLElement}
  */
-function buildTimelineItem(item, opts) {
-  const leftRank = !!(opts && opts.leftCol === "rank");
+function buildTimelineItem(item) {
   const g = getGlossary(item.purpose);
   const category = resolveCategory(item, g);
   const canceled = item.canceled === true;
+  const guClass =
+    item.gu === "갑구" ? " gu-gap" : item.gu === "을구" ? " gu-eul" : "";
 
-  // 말소 항목: wrap 에 is-canceled 추가(가산형). 색(--cat 회색화)·형태(취소선·흐림)는
-  // CSS 가 담당. 살아있는 항목은 추가 장식 없이 의미색 강조 유지.
+  // 말소 항목: wrap 에 is-canceled 추가. 색(--cat 회색화)·형태(취소선·흐림)는 CSS 담당.
   const wrap = el(
     "article",
-    `tl-item cat-${category}${canceled ? " is-canceled" : ""}${leftRank ? " tl-left-rank" : ""}`
+    `tl-item cat-${category}${guClass}${canceled ? " is-canceled" : ""}`
   );
 
-  if (leftRank) {
-    // ── 좌측: 순위번호(등기부 순서 뷰) — 크게 표시. 말소면 빨간 취소선(CSS). ──
-    const rankBox = el("div", "tl-rankcol");
-    if (hasVal(item.rank)) {
-      const rankText = String(item.rank).trim();
-      const rankNum = el("span", "tl-rank-big", rankText);
-      rankNum.setAttribute("aria-label", `순위번호 ${rankText}`);
-      rankBox.appendChild(rankNum);
-    }
-    wrap.appendChild(rankBox);
-  } else {
-    // ── 좌측: 날짜 + 색 점(기존 기본 동작) ─────────────
-    const dateBox = el("div", "tl-date");
-    dateBox.appendChild(el("span", "tl-dot", null));
-    dateBox.appendChild(el("time", "tl-date-text", formatDate(item.receiptDate)));
-    wrap.appendChild(dateBox);
-  }
+  // ── 좌측: 날짜 + 구 분류색 점 ─────────────
+  const dateBox = el("div", "tl-date");
+  dateBox.appendChild(el("span", "tl-dot", null));
+  dateBox.appendChild(el("time", "tl-date-text", formatDate(item.receiptDate)));
+  wrap.appendChild(dateBox);
 
   // ── 우측: 카드 ─────────────────────────────────────
   const card = el("div", "tl-card");
 
-  // 말소 항목: 크고 빨간 X 마크(장식). 본문 위에 코너 배치(CSS) — 텍스트는 안 가림.
-  if (canceled) card.appendChild(canceledXMark());
-
   // 헤더: 구 배지 + 순위번호 + 아이콘 + purpose 원문
-  // (좌측 컬럼이 순위번호인 뷰에서는 헤더 "순위 N" 배지가 중복 → 생략)
   const cardHead = el("div", "tl-card-head");
   if (item.gu) cardHead.appendChild(el("span", "tl-badge", item.gu));
-  if (item.rank && !leftRank) cardHead.appendChild(el("span", "tl-rank", `순위 ${item.rank}`));
+  if (item.rank) cardHead.appendChild(el("span", "tl-rank", `순위 ${item.rank}`));
   cardHead.appendChild(iconEl(category));
   cardHead.appendChild(el("span", "tl-purpose", item.purpose || ""));
-  // "말소 · 날짜 · 원인" 라벨(빨강·사실어). 제목 span(.tl-purpose)에만 취소선, 라벨엔 안 그어짐.
-  if (canceled) cardHead.appendChild(el("span", "tl-canceled-chip", canceledLabelText(item)));
+  // 회색 말소 칩("말소 · YY.MM.DD") — 취소선은 제목 span(.tl-purpose)에만.
+  if (canceled) cardHead.appendChild(el("span", "chip-dead", chipDeadText(item)));
   card.appendChild(cardHead);
 
   // 층2 보조표기: 한자 + 영문 (미수록 시 자료불충분)
@@ -337,9 +448,9 @@ function buildTimelineItem(item, opts) {
 }
 
 // ---------------------------------------------------------------------------
-// 등기부 원형 보기(기본 모드 전용) — 표제부/갑구/을구 구획 재현
-//   가산형: 기존 buildTimelineItem 재사용, 재파싱·재정렬 계산 없이 show/hide 토글.
-//   섹션 헤더는 등기부 원문 표기 그대로(사실) — 평가어 아님.
+// 2층 ②③ — 갑구/을구 블록 (설계서 5-4, 기본 뷰)
+//   순위번호 순 나열. 유효/말소 대비는 active/cancelled 클래스가 담당(CSS).
+//   섹션 라벨은 등기부 원문 표기 그대로(사실) — 평가어 아님.
 // ---------------------------------------------------------------------------
 
 /**
@@ -368,25 +479,70 @@ function compareRank(a, b) {
   return ra.main - rb.main || ra.sub - rb.sub;
 }
 
-/** 구 구획 정의 — 헤더 문구는 등기부 원문 표기 그대로. */
+/** 구 구획 정의 — 라벨 문구는 등기부 원문 표기(사실). 색은 칸 분류색만. */
 const GU_SECTIONS = [
-  { gu: "갑구", title: "【 갑 구 】 (소유권에 관한 사항)" },
-  { gu: "을구", title: "【 을 구 】 (소유권 이외의 권리에 관한 사항)" },
+  { gu: "갑구", tag: "tag-gap", title: "소유권에 관한 사항" },
+  { gu: "을구", tag: "tag-eul", title: "소유권 이외의 권리에 관한 사항" },
 ];
 
 /**
- * 등기부 순서 뷰 — 갑구/을구 구획별로 순위번호 순 카드 나열.
- * 표제부 헤더는 이미 위에 상시 표시되므로 여기서 중복 생성하지 않는다.
- * 카드는 buildTimelineItem 재사용(해석 문장·칩·말소 X 동일).
+ * 갑구/을구 항목 1건 → .reg-item (설계서 5-4).
+ * reg-head(순위 + 등기목적 + 말소칩) + reg-detail(접수일·권리자·금액·사건번호 —
+ * 있는 것만 " · " 연결) + 해석 문장(층1, 조용한 회색 — 이 도구의 핵심 가치라 유지).
+ * @param {object} item
+ * @returns {HTMLElement}
+ */
+function buildRegItem(item) {
+  const canceled = item.canceled === true;
+  const row = el("div", `reg-item ${canceled ? "cancelled" : "active"}`);
+
+  const head = el("div", "reg-head");
+  if (hasVal(item.rank)) head.appendChild(el("span", "rank", String(item.rank).trim()));
+  head.appendChild(el("span", "purpose", item.purpose || ""));
+  if (canceled) head.appendChild(el("span", "chip-dead", chipDeadText(item)));
+  row.appendChild(head);
+
+  // 상세: 접수일 · 권리자 · 금액 · 사건번호 — 있는 것만(빈칸 노출 금지)
+  const parts = [];
+  if (hasVal(item.receiptDate)) {
+    let receipt = formatDate(item.receiptDate);
+    if (hasVal(item.receiptNo)) receipt += ` 제${item.receiptNo}호`;
+    parts.push(receipt);
+  }
+  if (hasVal(item.party)) parts.push(String(item.party).trim());
+  const amountText =
+    formatAmount(item.amount) || (hasVal(item.amountRaw) ? item.amountRaw : null);
+  if (amountText) {
+    parts.push(
+      `${hasVal(item.amountKind) ? String(item.amountKind).trim() + " " : ""}${amountText}`
+    );
+  }
+  if (hasVal(item.caseNo)) parts.push(`사건번호 ${String(item.caseNo).trim()}`);
+  if (parts.length > 0) row.appendChild(el("div", "reg-detail", parts.join(" · ")));
+
+  // 층1 해석 문장(사실 풀이) — reg-detail 아래 작은 회색 줄
+  const g = getGlossary(item.purpose);
+  row.appendChild(el("p", "reg-plain", g.basic(item)));
+
+  return row;
+}
+
+/**
+ * 기본 뷰(설계서 5-4) — 갑구/을구 블록별로 순위번호 순 나열.
+ * 표제부 블록은 위에 상시 표시되므로 여기서 중복 생성하지 않는다.
  * @param {Array} visibleItems  - display !== false 필터 완료된 timeline 항목
  * @returns {HTMLElement}
  */
 function buildRegistryOrderView(visibleItems) {
   const wrap = el("div", "registry-order");
   for (const sec of GU_SECTIONS) {
-    const section = el("section", "gu-section");
-    section.setAttribute("aria-label", sec.gu);
-    section.appendChild(el("h3", "gu-title", sec.title));
+    const block = el("section", "reg-block");
+    block.setAttribute("aria-label", sec.gu);
+
+    const label = el("div", "reg-label");
+    label.appendChild(el("span", `tag ${sec.tag}`, sec.gu));
+    label.appendChild(document.createTextNode(` ${sec.title}`));
+    block.appendChild(label);
 
     const items = visibleItems
       .filter((it) => it && it.gu === sec.gu)
@@ -394,113 +550,13 @@ function buildRegistryOrderView(visibleItems) {
       .sort((a, b) => compareRank(a.rank, b.rank));
 
     if (items.length === 0) {
-      section.appendChild(el("p", "gu-empty", "기록된 항목 없음"));
+      block.appendChild(el("p", "gu-empty", "기록된 항목 없음"));
     } else {
-      const list = el("div", "timeline gu-list");
-      // 실제 등기부처럼 좌측 컬럼 = 순위번호(말소면 빨간 취소선은 CSS)
-      for (const item of items) list.appendChild(buildTimelineItem(item, { leftCol: "rank" }));
-      section.appendChild(list);
+      for (const item of items) block.appendChild(buildRegItem(item));
     }
-    wrap.appendChild(section);
+    wrap.appendChild(block);
   }
-  // 실제 등기부 마지막 장 형식의 "주요 등기사항 요약 (참고용)" — 현존(말소 안 됨) 사항만.
-  wrap.appendChild(buildReferenceSummary(visibleItems));
   return wrap;
-}
-
-/**
- * 주요 등기사항 요약 (참고용) — 실제 등기부 마지막 장 형식 재현.
- * 현존(canceled !== true) 사항만, 파싱된 사실값만 표기(없는 필드는 조각 생략 — 창작 금지).
- * @param {Array} visibleItems - display !== false 필터 완료된 timeline 항목
- * @returns {HTMLElement}
- */
-function buildReferenceSummary(visibleItems) {
-  const box = el("section", "refsum");
-  box.setAttribute("aria-label", "주요 등기사항 요약 (참고용)");
-  box.appendChild(el("h3", "refsum-title", "주요 등기사항 요약 (참고용)"));
-  box.appendChild(
-    el(
-      "p",
-      "refsum-note",
-      "이 요약은 말소되지 않은 사항을 간략히 정리한 것으로, 증명서로서의 기능을 제공하지 않습니다. 실제 권리사항 파악을 위해서는 등기부등본 원본을 확인하세요."
-    )
-  );
-
-  const alive = visibleItems.filter((it) => it && it.canceled !== true);
-
-  // 현존 항목 1건 → 요약 행(순위번호 앞에 뚜렷이, 있는 필드만)
-  function rowFor(item) {
-    const row = el("div", `refsum-row${item.canceled === true ? " is-canceled" : ""}`);
-    row.appendChild(el("span", "refsum-rank", String(item.rank || "")));
-    const parts = [];
-    if (hasVal(item.purpose)) parts.push(item.purpose);
-    if (hasVal(item.receiptDate)) {
-      let receipt = formatDate(item.receiptDate);
-      if (hasVal(item.receiptNo)) receipt += ` 제${item.receiptNo}호`;
-      parts.push(receipt);
-    }
-    const amountText = formatAmount(item.amount) || (hasVal(item.amountRaw) ? item.amountRaw : null);
-    if (amountText) parts.push(`${hasVal(item.amountKind) ? item.amountKind + " " : ""}${amountText}`);
-    if (hasVal(item.party)) parts.push(item.party);
-    if (hasVal(item.caseNo)) parts.push(`사건번호 ${item.caseNo}`);
-    row.appendChild(el("span", "refsum-body", parts.join(" · ")));
-    return row;
-  }
-
-  function subSection(title, items, emptyText) {
-    const sec = el("div", "refsum-sub");
-    sec.appendChild(el("h4", "refsum-sub-title", title));
-    if (items.length === 0) {
-      sec.appendChild(el("p", "refsum-empty", emptyText));
-    } else {
-      for (const it of items) sec.appendChild(rowFor(it));
-    }
-    return sec;
-  }
-
-  // 1. 소유지분현황 (갑구) — 현재 소유자(현존 ownership 중 최신 접수일)
-  const owners = alive
-    .filter(
-      (it) =>
-        it.gu === "갑구" &&
-        it.category === "ownership" &&
-        /소유권(이전|보존)|지분/.test(it.purpose || "")
-    )
-    .slice()
-    .sort((a, b) => String(a.receiptDate || "").localeCompare(String(b.receiptDate || "")));
-  const cur = owners.length ? owners[owners.length - 1] : null;
-  const ownerSec = el("div", "refsum-sub");
-  ownerSec.appendChild(el("h4", "refsum-sub-title", "1. 소유지분현황 ( 갑구 )"));
-  if (cur) {
-    const row = el("div", "refsum-row");
-    row.appendChild(el("span", "refsum-rank", String(cur.rank || "")));
-    const bits = [];
-    if (hasVal(cur.party)) bits.push(`등기명의인 ${cur.party}`);
-    if (hasVal(cur.receiptDate)) bits.push(`${formatDate(cur.receiptDate)} 취득`);
-    row.appendChild(el("span", "refsum-body", bits.join(" · ")));
-    ownerSec.appendChild(row);
-  } else {
-    ownerSec.appendChild(el("p", "refsum-empty", "확인 정보 없음"));
-  }
-  box.appendChild(ownerSec);
-
-  // 2. 소유지분을 제외한 소유권에 관한 사항 (갑구) — 현존 가압류/압류/경매/가처분/가등기 등
-  const gapRights = alive
-    .filter((it) => it.gu === "갑구" && it.category !== "ownership")
-    .slice()
-    .sort((a, b) => compareRank(a.rank, b.rank));
-  box.appendChild(
-    subSection("2. 소유지분을 제외한 소유권에 관한 사항 ( 갑구 )", gapRights, "기록사항 없음")
-  );
-
-  // 3. (근)저당권 및 전세권 등 (을구) — 현존 근저당·변경·전세권 등
-  const eulRights = alive
-    .filter((it) => it.gu === "을구")
-    .slice()
-    .sort((a, b) => compareRank(a.rank, b.rank));
-  box.appendChild(subSection("3. (근)저당권 및 전세권 등 ( 을구 )", eulRights, "기록사항 없음"));
-
-  return box;
 }
 
 /**
@@ -542,6 +598,8 @@ function attachViewSwitch(root, visibleItems) {
   let integratedRendered = false;
   function selectView(showRegistry) {
     if (!showRegistry && !integratedRendered) {
+      // 통합본 안내(중립) — 통합본 뷰 안에서 1회 노출
+      integrated.appendChild(buildIntegratedNotice());
       for (const item of visibleItems) integrated.appendChild(buildTimelineItem(item));
       integratedRendered = true;
     }
@@ -814,12 +872,53 @@ export function buildSummary(registryData) {
 }
 
 // ---------------------------------------------------------------------------
+// 3층 — CTA (설계서 5-5)
+//   url 이 빈 항목은 그 줄 자체를 생략(빈 링크 금지). 둘 다 비면 블록 전체 생략.
+// ---------------------------------------------------------------------------
+
+/** 3층 CTA 블록. CTA 설정이 모두 비어 있으면 null. */
+function buildCta() {
+  const consult = hasVal(CTA.consultUrl) ? String(CTA.consultUrl).trim() : "";
+  const lesson = hasVal(CTA.lessonUrl) ? String(CTA.lessonUrl).trim() : "";
+  if (!consult && !lesson) return null;
+
+  const box = el("div", "cta");
+
+  const lead = el("p", "cta-lead");
+  lead.appendChild(el("b", null, "계약을 앞두고 계신가요?"));
+  lead.appendChild(document.createTextNode(" 등기부만으로 안심하긴 이릅니다."));
+  box.appendChild(lead);
+
+  if (consult) {
+    const btn = el("a", "cta-btn", "계약 전 권리 진단 받기");
+    btn.href = consult;
+    btn.target = "_blank"; // 티스토리 iframe 안 → 새 탭
+    btn.rel = "noopener";
+    box.appendChild(btn);
+  }
+
+  if (lesson) {
+    const sub = el("p", "cta-sub");
+    sub.appendChild(document.createTextNode("이 물건이 경매로 넘어가면? → "));
+    const link = el("a", null, "경매 권리분석 배우기");
+    link.href = lesson;
+    link.target = "_blank";
+    link.rel = "noopener";
+    sub.appendChild(link);
+    box.appendChild(sub);
+  }
+
+  return box;
+}
+
+// ---------------------------------------------------------------------------
 // 엔트리포인트
 // ---------------------------------------------------------------------------
 
 /**
- * 기본 모드 렌더. registryData{ property, timeline } 를 container 에 그린다.
- * 면책 문구는 index.html(상시 노출)에 있으므로 여기서 출력하지 않는다.
+ * 기본 모드(대중용 화면) 렌더 — 설계서 1절 3층 구조.
+ *   1층 교육 블록 → 2층 사실 요약(표제부 + 갑구/을구, 유효/말소 대비) → 3층 CTA.
+ * 면책 문구(확정 문구)는 index.html(상시 노출)에 있으므로 여기서 중복 출력하지 않는다.
  *
  * @param {{property:object, timeline:Array}} registryData
  * @param {HTMLElement} container
@@ -832,13 +931,27 @@ export function renderBasic(registryData, container) {
   const data = registryData || {};
   const root = el("div", "basic-result");
 
-  // 1) 표제부 헤더(항상 표시)
-  root.appendChild(buildPropertyHeader(data.property));
+  // 1층) 교육 블록 "등기부등본 3분 이해" — 결과 맨 앞 1회
+  root.appendChild(buildEduBlock());
 
-  // 1-1) 통합본 안내(표제부 아래·타임라인 위, 1회 노출)
-  root.appendChild(buildIntegratedNotice());
+  // 2층) 사실 요약 헤더 + 면책(설계서 5-2 / 9절 문구)
+  const secTitle = el("h2", "sec-title", "주요 등기사항 요약 ");
+  secTitle.appendChild(el("span", "ref", "(참고용)"));
+  root.appendChild(secTitle);
+  root.appendChild(
+    el(
+      "p",
+      "ref-disclaimer",
+      "이 요약은 등기부등본을 읽기 쉽게 정리한 것으로, 증명서로서의 기능을 제공하지 않습니다. " +
+        "실제 권리사항 파악을 위해서는 등기부등본 원본을 확인하세요."
+    )
+  );
 
-  // 2) 타임라인: display !== false 만, receiptDate 오름차순(parser가 이미 정렬).
+  // 2층 ①) 표제부 블록(집합/단독/토지 자동 분기 — 사실이 하나도 없으면 블록 생략)
+  const pyo = buildPropertyHeader(data.property);
+  if (pyo) root.appendChild(pyo);
+
+  // 2층 ②③) 갑구/을구: display !== false 만.
   const timeline = Array.isArray(data.timeline) ? data.timeline : [];
   const visible = timeline.filter((it) => it && it.display !== false);
 
@@ -851,14 +964,18 @@ export function renderBasic(registryData, container) {
       )
     );
   } else {
-    // 보기 전환 탭 + [시간순 통합]/[등기부 순서] 두 뷰(재파싱 없이 show/hide 토글)
+    // 보기 전환 탭 + [등기부 순서(기본)]/[등기부등본 통합본] 두 뷰(재파싱 없이 show/hide)
     attachViewSwitch(root, visible);
   }
 
-  // 3) 요약본(결과 하단) — 등기 항목이 있을 때만(없으면 위 안내문으로 충분).
+  // 한눈에 보기(사실 요약) — 등기 항목이 있을 때만(없으면 위 안내문으로 충분).
   if (timeline.length > 0) {
     root.appendChild(buildSummary(data));
   }
+
+  // 3층) CTA — 한눈에 보기 아래·면책 위. 링크가 하나도 없으면 블록 생략.
+  const cta = buildCta();
+  if (cta) root.appendChild(cta);
 
   container.appendChild(root);
   return container;
@@ -1030,12 +1147,9 @@ function buildEasyItem(item) {
   );
   wrap.appendChild(mascotEl("point", 40, "mascot-sm"));
 
-  // 말소 항목: 크고 빨간 X 마크(장식). 카드 코너 배치(CSS) — 본문 텍스트는 안 가림.
-  if (canceled) wrap.appendChild(canceledXMark());
-
   const body = el("div", "easy-body");
 
-  // 말소 항목: "말소 · 날짜 · 원인" 빨강 라벨(사실 보강). 취소선은 본문에 쓰지 않음(읽기 방해).
+  // 말소 항목: "말소 · 날짜 · 원인" 회색 라벨(사실 보강). 취소선은 본문에 쓰지 않음(읽기 방해).
   if (canceled) body.appendChild(el("span", "easy-canceled-tag", canceledLabelText(item)));
 
   // 층1 쉬운 풀이 말풍선

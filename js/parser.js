@@ -618,7 +618,88 @@ export function extractProperty(pyoLines, allLines) {
     }
   }
 
-  return { address, uid, buildingType, viewedAt, area, landShare };
+  // --- 가산: propertyType(표제부 자동 감지, 설계서 3절) / structure(구조내역) ---
+  // 기존 6필드(address/uid/buildingType/viewedAt/area/landShare) 로직 불변.
+  const scanTexts = scan.map((l) =>
+    l && typeof l.text === "string" ? l.text : ""
+  );
+
+  // propertyType: collective(집합건물) / land(토지) / single(단독·일반건물)
+  let propertyType = "single";
+  const hasCollectiveMark =
+    buildingType === "집합건물" ||
+    scanTexts.some((t) => {
+      const s = stripWs(t);
+      return s.includes("전유부분") || s.includes("대지권");
+    });
+  if (hasCollectiveMark) {
+    propertyType = "collective";
+  } else {
+    const hasLandMark =
+      buildingType === "토지" ||
+      scanTexts.some((t) => {
+        const s = stripWs(t);
+        return s.includes("【표제부】") && s.includes("(토지의표시)");
+      });
+    if (hasLandMark) propertyType = "land";
+  }
+
+  // structure: 표제부의 건물 내역에서 건축구조 토큰 추출(못 찾으면 null — 창작 금지).
+  //  - 표제부 영역(첫 【갑구】 경계 전)만 스캔 — 갑/을구 본문 오염 방지.
+  //  - 전유부분 쪽(예 "철근 콘크리트조") 우선, 없으면 1동 표시의 구조.
+  //  - ㎡ 라인은 dropNoise 로 제거되므로 raw(allLines)에서 찾는다.
+  //  - 지붕 표기(평슬래브지붕 등)가 붙으면 원문 그대로 포함.
+  let structure = null;
+  {
+    const STRUCT_RE =
+      /((?:[가-힣]+\s)?[가-힣]*콘크리트조|[가-힣]{1,6}조)(\s*[가-힣]+지붕)?/;
+    const pickStructure = (texts) => {
+      for (const raw of texts) {
+        const t = collapseWs(raw);
+        if (!t) continue;
+        const m = STRUCT_RE.exec(t);
+        if (!m) continue;
+        const token = collapseWs(m[1]);
+        // "구조"(컬럼 헤더 등) 같은 비건축 토큰 배제
+        if (!token || token === "구조" || token.endsWith("구조")) continue;
+        return collapseWs(m[0]);
+      }
+      return null;
+    };
+
+    const rawTexts = rawScan.map((l) =>
+      l && typeof l.text === "string" ? l.text : ""
+    );
+    let gapIdx = rawTexts.findIndex((t) => stripWs(t).includes("【갑구】"));
+    if (gapIdx === -1) gapIdx = rawTexts.length;
+    const pyoTexts = rawTexts.slice(0, gapIdx);
+
+    // 1순위: 전유부분 영역(마커 이후 ~ 대지권 전)
+    const juIdx = pyoTexts.findIndex((t) => stripWs(t).includes("전유부분"));
+    if (juIdx !== -1) {
+      let end = pyoTexts.length;
+      for (let j = juIdx + 1; j < pyoTexts.length; j++) {
+        if (stripWs(pyoTexts[j]).includes("대지권")) {
+          end = j;
+          break;
+        }
+      }
+      structure = pickStructure(pyoTexts.slice(juIdx, end));
+    }
+    // 2순위: 표제부 전체(1동의 건물의 표시 포함)
+    if (structure == null) structure = pickStructure(pyoTexts);
+  }
+
+  return {
+    address,
+    uid,
+    buildingType,
+    viewedAt,
+    area,
+    landShare,
+    propertyType,
+    structure,
+  };
 }
 
 // ---------------------------------------------------------------------------

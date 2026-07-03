@@ -13,16 +13,24 @@
   --c-pending:   #7c3aed; /* 보라  : 가등기 */
   --c-etc:       #6b7280; /* 회색  : 표시변경 등(기본 숨김) / 말소 꼬리표 고정색 */
 
-  /* 기본(라이트) 테마 토큰 */
-  --bg:            #f4f5f7;
+  /* 라이트 전용 테마 토큰(설계서 6절 팔레트 — 다크 대응 없음) */
+  --bg:            #f6f7f9;
   --surface:       #ffffff;
   --surface-alt:   #f9fafb;
-  --text:          #1f2937;
+  --text:          #1f2430;
   --text-muted:    #6b7280;
   --border:        #d1d5db;
   --border-strong: #9ca3af;
   --accent:        var(--c-ownership);
   --drop-active:   #eff6ff;
+
+  /* 말소(취소) 표현 전용 회색(설계서 4절) — 판단색(빨강/주황) 금지 */
+  --dead:          #b3b8c0;
+  --dead-chip:     #9aa0aa;
+
+  /* 구 분류색(설계서 6절 — 색은 칸 분류에만) */
+  --gu-gap:        #1a5fa5; /* 갑구 = 파랑 */
+  --gu-eul:        #5b4bb5; /* 을구 = 보라 */
 
   --radius:   12px;
   --radius-sm: 8px;
@@ -33,40 +41,7 @@
           "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
 
-/* ==========================================================================
-   다크모드 (M8) — OS 다크 자동대응(prefers-color-scheme: dark)
-   배경/글자/카드/말풍선/배지/표제부 헤더 대비 4.5:1 이상.
-   의미색(category)은 어두운 배경에서도 식별되도록 밝게 조정(변수만 교체).
-   ========================================================================== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* 표면/글자 토큰 */
-    --bg:            #111418;
-    --surface:       #1b1f24;
-    --surface-alt:   #232830;
-    --text:          #e8eaed; /* on --surface(#1b1f24): ≈ 12:1 */
-    --text-muted:    #aab2bd; /* on --surface(#1b1f24): ≈ 6.4:1 */
-    --border:        #3a4150;
-    --border-strong: #5b6472;
-    --drop-active:   #1e293b;
-
-    /* 부록 A 의미색 — 다크 배경용 밝은 변형(의미는 동일, 명도만 상향) */
-    --c-ownership: #60a5fa; /* 파랑  : 소유권 */
-    --c-loan:      #fbbf24; /* 주황  : 근저당·저당·질권 */
-    --c-restraint: #f87171; /* 빨강  : 가압류·압류·가처분 */
-    --c-auction:   #fb7185; /* 진빨강(로즈): 경매개시 — restraint와 구분 */
-    --c-right:     #2dd4bf; /* 청록  : 전세권·지상권·지역권 */
-    --c-pending:   #c084fc; /* 보라  : 가등기 */
-    --c-etc:       #9aa3af; /* 회색  : 표시변경/말소 꼬리표 */
-  }
-
-  /* 단색 채움 + 흰글자 컴포넌트는 밝아진 배경 위에서 글자색을 어둡게(대비 확보) */
-  .upload-button,
-  .pyo-label,
-  .mode-btn-easy {
-    color: #0b1018; /* 밝은 의미색 배경 위 어두운 글자 → 대비 ≥ 7:1 */
-  }
-}
+/* 라이트 전용 고정(설계서 10절) — 다크 모드 대응 코드 없음. */
 
 * { box-sizing: border-box; }
 
@@ -235,17 +210,13 @@ body {
   line-height: 1.5;
 }
 
-/* 면책 경고 강조 — 빨강(라이트/다크 모두 대비 확보). 집요정 아웃트로 대사에도 재사용. */
+/* 면책 경고 강조 — 사용자 확정 문구의 가독 강조(권리 표시 아님 — 판단색 금지의 예외).
+   집요정 아웃트로 대사에도 재사용. */
 .disclaimer .disclaimer-warn,
 .bubble .disclaimer-warn,
 .disclaimer-warn {
   color: #c92a2a;
   font-weight: 600;
-}
-@media (prefers-color-scheme: dark) {
-  .disclaimer .disclaimer-warn,
-  .bubble .disclaimer-warn,
-  .disclaimer-warn { color: #ff8787; }
 }
 
 /* ==========================================================================
@@ -264,45 +235,184 @@ body {
 .cat-pending   { --cat: var(--c-pending); }
 .cat-etc       { --cat: var(--c-etc); }
 
-/* ---------- 표제부 헤더 ---------- */
-.pyo-header {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 12px;
+/* ==========================================================================
+   대중용 화면 3층 구조 (설계서 5·6절) — 라이트 전용
+   1층 교육 블록 / 2층 사실 요약(표제부·갑구·을구) / 3층 CTA
+   색은 칸 분류색(표제부=회색, 갑구=파랑, 을구=보라)만 — 판단색 금지.
+   ========================================================================== */
+
+/* ---------- 1층 · 교육 블록 "등기부등본 3분 이해" ---------- */
+.edu {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
 }
-.pyo-head { margin-bottom: 12px; }
-.pyo-label {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 3px 12px;
-  border-radius: 999px;
-  background: var(--c-ownership);
-  color: #fff;
+.edu > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
 }
-.pyo-grid {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px 20px;
+.edu > summary::-webkit-details-marker { display: none; }
+.edu-icon { display: inline-flex; align-items: center; color: #6b7280; }
+.edu-icon svg { display: block; }
+.edu-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.edu-card {
+  background: #fafbfc;
+  border: 1px solid #eceef1;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
-.pyo-row { display: flex; gap: 10px; align-items: baseline; }
-.pyo-key {
-  flex: 0 0 76px;
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.edu-h { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.edu-card p { margin: 0; font-size: 13px; color: #5b6270; }
+
+/* ---------- 분류 태그(칸 분류색만 — 판단 아님) ---------- */
+.tag {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
-.pyo-val {
-  margin: 0;
-  font-size: 0.95rem;
-  word-break: break-word;
+.tag-title { background: #f1f2f4; color: #6b7280; }
+.tag-gap   { background: #e8f1fd; color: var(--gu-gap); }
+.tag-eul   { background: #f0edfb; color: var(--gu-eul); }
+
+/* ---------- 2층 · 헤더 + 면책 ---------- */
+.sec-title { font-size: 18px; font-weight: 500; margin: 0 0 8px; }
+.sec-title .ref { font-size: 13px; color: #9aa0aa; font-weight: 400; }
+.ref-disclaimer {
+  font-size: 12px;
+  color: #8a8f99;
+  background: #fff;
+  border: 1px dashed #dfe2e6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+/* ---------- 블록 공통(표제부/갑구/을구) ---------- */
+.reg-block {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.reg-label {
+  font-size: 14px;
+  font-weight: 500;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eceef1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- 표제부 사실 나열(중립 — 강조/약화 없음) ---------- */
+.fact-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  padding: 5px 0;
+}
+.fact-row span { color: #8a8f99; flex: 0 0 auto; }
+.fact-row b {
+  font-weight: 500;
+  text-align: right;
+  min-width: 0;
   overflow-wrap: anywhere;
+  word-break: keep-all;
 }
+.fact-sub { font-size: 12px; color: #9aa0aa; margin: 10px 0 2px; }
+
+/* ---------- 갑구·을구 항목(유효/말소 대비 — 화면의 유일한 대비) ---------- */
+.reg-item { padding: 10px 0; border-top: 1px solid #f1f2f4; }
+.reg-item:first-of-type { border-top: 0; }
+.reg-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rank { font-size: 12px; color: #9aa0aa; min-width: 20px; }
+.purpose { font-size: 15px; font-weight: 500; word-break: keep-all; }
+.reg-detail {
+  font-size: 13px;
+  color: #5b6270;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  line-height: 1.55;
+}
+/* 층1 해석 문장 — 조용한 회색(강조 없음) */
+.reg-plain {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #8a8f99;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+/* 유효: 진한 글씨 — 별도 장식 없음 */
+.reg-item.active .purpose { color: #1f2430; }
+
+/* 말소: 흐린 회색 + 회색 취소선(빨강 아님) — 순위번호도 동일 규칙 */
+.reg-item.cancelled .purpose {
+  color: var(--dead);
+  text-decoration: line-through;
+  text-decoration-color: currentColor;
+}
+.reg-item.cancelled .rank {
+  color: var(--dead);
+  text-decoration: line-through;
+  text-decoration-color: currentColor;
+}
+.reg-item.cancelled .reg-detail,
+.reg-item.cancelled .reg-plain { color: var(--dead); }
+
+/* 회색 "말소 · YY.MM.DD" 칩 — 기본 뷰(reg-item)·통합본 카드 공용 */
+.chip-dead {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--dead-chip);
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 5px;
+  padding: 2px 8px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ---------- 3층 · CTA ---------- */
+.cta {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin-top: 20px;
+}
+.cta-lead { margin: 0; font-size: 1rem; color: var(--text); word-break: keep-all; }
+.cta-btn {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 11px 22px;
+  min-height: 44px;         /* 터치타겟 ≥44px */
+  background: #1f2430;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+}
+.cta-btn:hover { filter: brightness(1.15); }
+.cta-sub { font-size: 13px; color: #5b6270; margin: 6px 0 0; }
+.cta-sub a { color: var(--gu-gap); }
 
 /* ---------- 타임라인 ---------- */
 .timeline {
@@ -394,12 +504,6 @@ body {
 }
 .tl-chip-amount { font-weight: 600; }
 
-.tl-canceled {
-  margin: 8px 0 0;
-  font-size: 0.82rem;
-  color: var(--c-etc);
-}
-
 /* ---------- 통합본 안내(갑구+을구) — 중립 안내 박스 ---------- */
 .integrated-notice {
   margin: 0 0 12px;
@@ -415,54 +519,35 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* ---------- 말소(취소) 항목 — 주 신호: 빨간 X(형태) + "말소·날짜·원인"(빨강 텍스트)
-   보조 신호: 색(회색화)+형태(취소선·약화). 색만 의존 금지 → 형태(X)+텍스트(말소) 동반. ---------- */
-/* 의미색 띠·점·아이콘을 회색으로(--cat 회색화). 기본 모드엔 마스코트가 없어 누수 없음. */
-.tl-item.is-canceled { --cat: var(--c-etc); }
-/* 본문 대비 유지(.78 — var(--text) on surface 기준 4.5:1 이상). X 마크가 코너로 넘쳐도 클립. */
-.tl-item.is-canceled .tl-card { opacity: 0.78; overflow: hidden; }
-/* X 마크가 헤더 텍스트를 가리지 않도록 우측 여백 확보(말소 카드만). */
-.tl-item.is-canceled .tl-card-head { padding-right: 52px; }
-/* 취소선은 제목 텍스트 span 에만(아이콘·배지·칩엔 안 그어짐). 색은 currentColor(회색/본문색). */
+/* ---------- 통합본 카드 색 규칙 — 좌측 점/띠·아이콘은 구 분류색만(판단색 제거) ----------
+   구 정보가 없는 항목은 중립 회색 폴백(카테고리 의미색이 새지 않게 gu 규칙보다 앞에 선언). */
+.view-integrated .tl-item { --cat: var(--c-etc); }
+.tl-item.gu-gap { --cat: var(--gu-gap); }
+.tl-item.gu-eul { --cat: var(--gu-eul); }
+
+/* ---------- 말소(취소) 항목 — 시인성 규칙(설계서 4절): 유일한 대비
+   유효 = 진한 글씨(장식 없음) / 말소 = 전체 흐림 + 회색 취소선 + 회색 "말소·날짜" 칩.
+   색만 의존 금지 → 취소선(형태) + "말소" 텍스트 칩 동반. 판단색(빨강) 없음. ---------- */
+/* 색 띠·점·아이콘 회색화(--cat) — gu 분류색보다 뒤에 선언(말소 우선). */
+.tl-item.is-canceled { --cat: var(--dead); }
+/* 전체 흐림(본문 대비는 유지선 안에서) */
+.tl-item.is-canceled .tl-card { opacity: 0.85; }
+/* 취소선은 제목 텍스트 span 에만 — 회색(currentColor). */
 .tl-item.is-canceled .tl-purpose {
+  color: var(--dead);
   text-decoration: line-through;
-  text-decoration-thickness: 2px;
   text-decoration-color: currentColor;
 }
-/* 순위번호 배지 말소 표시 — 실제 등기부 관행(순위번호에 빨간 취소선) 재현.
-   .is-canceled 조상 공통 규칙 → 시간순 통합·등기부 순서 두 뷰 모두 일관 적용.
-   색만 의존 X — "말소" 라벨·X 마크 텍스트/형태 신호 동반. 현존 항목엔 미적용. */
+.tl-item.is-canceled .tl-basic,
+.tl-item.is-canceled .tl-term,
+.tl-item.is-canceled .tl-chip,
+.tl-item.is-canceled .tl-date-text { color: var(--dead); }
+/* 순위번호도 말소면 회색 취소선(빨강 아님). 두 뷰 공통. */
 .is-canceled .tl-rank {
-  color: var(--c-restraint);
-  font-weight: 700;
+  color: var(--dead);
   text-decoration: line-through;
-  text-decoration-thickness: 2px;
   text-decoration-color: currentColor;
 }
-
-/* "말소 · 날짜 · 원인" 라벨(빨강·사실어). 취소선 영향 밖(별도 span). 길면 줄바꿈. */
-.tl-canceled-chip {
-  font-size: 0.74rem;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--surface-alt);
-  border: 1px solid var(--c-restraint);
-  color: var(--c-restraint);
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-
-/* 크고 또렷한 빨간 X 마크(말소 관행). 장식(aria-hidden) — 카드 우상단 코너. */
-.canceled-x {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  color: var(--c-restraint);
-  pointer-events: none;
-  line-height: 0;
-}
-.canceled-x svg { display: block; width: 44px; height: 44px; }
 
 .tl-empty {
   background: var(--surface-alt);
@@ -501,40 +586,16 @@ body {
 }
 .view-tab:hover { filter: brightness(0.97); }
 .view-tab:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.4); outline-offset: 2px; }
-/* 다크모드: 밝아진 --accent 배경 위 어두운 글자(대비 확보) */
-@media (prefers-color-scheme: dark) {
-  .view-tab[aria-pressed="true"] { color: #0b1018; }
-}
 
 /* hidden 속성이 .timeline{display:flex} 등 저자 규칙에 밀리지 않게 명시 */
 .view-integrated[hidden],
 .registry-view[hidden] { display: none; }
 
-/* ---------- 등기부 순서 뷰 — 갑구/을구 구획(표제부 헤더는 위에 상시 존재) ---------- */
-.gu-section { margin-top: 4px; }
-.gu-section + .gu-section { margin-top: 22px; }
-/* 구획 헤더: 등기부 원문 표기(【 갑 구 】 …) — 가운데 정렬 띠 */
-.gu-title {
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 1rem;          /* 본문 ≥16px */
-  font-weight: 700;
-  text-align: center;
-  color: var(--text);
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-/* 비어 있는 구 안내(사실 한 줄) */
+/* ---------- 기본 뷰 — 비어 있는 구 안내(사실 한 줄) ---------- */
 .gu-empty {
   margin: 0;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  font-size: 0.95rem;
+  padding: 10px 0 4px;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
@@ -607,7 +668,6 @@ body {
 @media (min-width: 768px) {
   .site-title { font-size: 1.85rem; }
   .upload-zone { padding: 48px 24px; }
-  .pyo-grid { grid-template-columns: 1fr 1fr; }
   /* 건물 종류: 라벨 + 셀렉트 가로 배치 */
   .kind-select { flex-direction: row; align-items: center; gap: 12px; }
   .kind-input { width: auto; min-width: 220px; }
@@ -801,26 +861,24 @@ body {
   color: var(--c-etc);
 }
 
-/* 말소(지워짐) 항목: 말풍선 약화 + 회색 테두리 + "지워짐" 태그.
+/* 말소(지워짐) 항목: 말풍선 약화 + 회색 테두리 + 회색 "말소" 태그.
    ★--cat 를 건드리지 않고 border-left-color 만 회색으로 → 마스코트 색 누수 방지.
-   취소선은 본문에 쓰지 않음(읽기 방해). */
-.easy-item.is-canceled { border-left-color: var(--c-etc); overflow: hidden; }
+   취소선은 본문에 쓰지 않음(읽기 방해). 판단색(빨강) 없음 — 조용한 회색만. */
+.easy-item.is-canceled { border-left-color: var(--c-etc); }
 .easy-item.is-canceled .bubble {
   opacity: 0.8;             /* 본문 대비 유지 */
   border-color: var(--border-strong);
 }
-/* X 마크가 본문 텍스트를 가리지 않게 우측 여백 확보(말소 카드만). */
-.easy-item.is-canceled .easy-body { padding-right: 50px; }
-/* "말소 · 날짜 · 원인" 라벨(빨강·사실어). 길면 줄바꿈. */
+/* "말소 · 날짜 · 원인" 라벨(회색·사실어). 길면 줄바꿈. */
 .easy-canceled-tag {
   align-self: flex-start;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 600;
   padding: 2px 9px;
   border-radius: 999px;
   background: var(--surface-alt);
-  border: 1px solid var(--c-restraint);
-  color: var(--c-restraint);
+  border: 1px solid var(--border-strong);
+  color: var(--dead-chip);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
@@ -993,106 +1051,8 @@ body {
 }
 .support-icon svg { display: block; }
 
-/* 다크모드: --c-loan 이 밝은 amber(#fbbf24)로 바뀜 → 글자는 계속 어둡게(대비 유지) */
-@media (prefers-color-scheme: dark) {
-  .support-button { color: #0b1018; }
-}
 @media (max-width: 600px) {
   .support-box { padding: 16px 12px; }
 }
 
-/* ==========================================================================
-   등기부 순서 뷰 — 좌측 순위번호 컬럼(실제 등기부 형태) + 주요 등기사항 요약(참고용)
-   ========================================================================== */
-
-/* 좌측 = 순위번호(모바일에서도 가로 배치 — 번호 열이 좁아 안전) */
-.tl-item.tl-left-rank {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 10px;
-}
-.tl-rankcol {
-  flex: 0 0 52px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 14px;
-  border-right: 1px solid var(--border);
-}
-.tl-rank-big {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-  word-break: keep-all;
-}
-/* 말소된 번호: 실제 등기부처럼 빨간 취소선 */
-.tl-item.is-canceled .tl-rank-big {
-  color: var(--c-restraint);
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-}
-.tl-item.tl-left-rank .tl-card { flex: 1; min-width: 0; }
-
-@media (min-width: 1280px) {
-  /* 1280 grid(132px 1fr)는 날짜 뷰용 — 순위번호 뷰는 좁은 열 유지 */
-  .tl-item.tl-left-rank {
-    display: flex;
-  }
-}
-
-/* ---------- 주요 등기사항 요약 (참고용) ---------- */
-.refsum {
-  margin-top: 24px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-}
-.refsum-title {
-  margin: 0 0 8px;
-  font-size: 1.1rem;
-  text-align: center;
-}
-.refsum-note {
-  margin: 0 0 14px;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  line-height: 1.5;
-}
-.refsum-sub { margin-top: 12px; }
-.refsum-sub-title {
-  margin: 0 0 6px;
-  font-size: 0.95rem;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 4px;
-}
-.refsum-row {
-  display: flex;
-  gap: 10px;
-  padding: 7px 2px;
-  border-bottom: 1px dotted var(--border);
-  font-size: 0.95rem;
-  align-items: baseline;
-}
-.refsum-row:last-child { border-bottom: 0; }
-.refsum-rank {
-  flex: 0 0 44px;
-  font-weight: 700;
-  text-align: center;
-}
-.refsum-body {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  word-break: keep-all;
-  line-height: 1.55;
-}
-.refsum-empty {
-  margin: 4px 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
+/* (구 "등기부 순서 뷰" 순위번호 컬럼·refsum 스타일은 설계서 5-4 reg-item 구조로 대체됨) */
