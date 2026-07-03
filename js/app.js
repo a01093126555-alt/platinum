@@ -255,6 +255,22 @@ function buildSupportBox() {
   link.appendChild(document.createTextNode(SUPPORT.label));
   box.appendChild(link);
 
+  // PC 방문자용 QR(동봉 정적 SVG — 외부 QR API 미사용): 폰 카메라로 찍어 송금.
+  // 모바일에서는 버튼이 앱으로 바로 연결되므로 CSS로 숨김(768px 이상에서만 표시).
+  const qrWrap = document.createElement("div");
+  qrWrap.className = "support-qr";
+  const qrImg = document.createElement("img");
+  qrImg.src = "assets/kakaopay-qr.svg";
+  qrImg.alt = "카카오페이 후원 QR 코드";
+  qrImg.width = 132;
+  qrImg.height = 132;
+  qrWrap.appendChild(qrImg);
+  const qrCap = document.createElement("p");
+  qrCap.className = "support-qr-caption";
+  qrCap.textContent = "PC에서는 휴대폰 카메라로 QR을 찍어 후원할 수 있어요.";
+  qrWrap.appendChild(qrCap);
+  box.appendChild(qrWrap);
+
   return box;
 }
 

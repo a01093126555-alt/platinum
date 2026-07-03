@@ -1216,3 +1216,26 @@ body {
   border-color: #b7d3f3;
 }
 .reg-block-pyo .reg-label { border-bottom-color: #b7d3f3; }
+
+/* PC용 후원 QR — 모바일(버튼이 앱 직결)에선 숨기고 768px 이상에서만 표시 */
+.support-qr { display: none; }
+@media (min-width: 768px) {
+  .support-qr {
+    display: block;
+    margin-top: 14px;
+  }
+  .support-qr img {
+    display: block;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    padding: 6px;
+  }
+  .support-qr-caption {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+}
