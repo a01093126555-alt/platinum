@@ -303,8 +303,7 @@ function showResult(data) {
   switchBox.className = "mode-switch";
   const switchText = document.createElement("p");
   switchText.className = "mode-switch-text";
-  switchText.textContent =
-    "혹시 어려우셨나요? 중학생도 이해할 수 있게 다시 풀어드릴게요.";
+  switchText.textContent = "더 쉽게 보기 · 중학생 버전"; // 간결 문구(사용자 확정 2026-07)
   const toEasyBtn = document.createElement("button");
   toEasyBtn.type = "button";
   toEasyBtn.className = "mode-btn mode-btn-easy";
