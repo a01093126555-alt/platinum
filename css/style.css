@@ -1169,10 +1169,12 @@ body {
 .support-text {
   margin: 0;
   font-size: 1rem;          /* 본문 ≥16px */
+  font-weight: 700;         /* 응원 문구 강조(사용자 확정 2026-07) */
   line-height: 1.6;
   color: var(--text);
   word-break: keep-all;
   overflow-wrap: anywhere;  /* 좁은 폭에서도 가로스크롤 0 */
+  text-align: center;
 }
 .support-button {
   display: inline-flex;

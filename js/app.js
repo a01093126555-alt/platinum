@@ -23,7 +23,7 @@ const ACCESS = {
 //   커피 사주기 버튼: 클릭 시 새 탭으로 이동하는 앵커일 뿐(외부 스크립트/위젯 로드 없음).
 const SUPPORT = {
   url: "https://qr.kakaopay.com/FaN3mKR8T", // ★후원 링크(카카오페이 송금). 비우면 버튼 숨김
-  label: "개발자 후원하기 · 100원부터 부담 없이",
+  label: "개발자 후원하기 · 100원부터 자유롭게",
 };
 
 // 스캔본(이미지) 판정 기준: 추출된 글자 수가 이보다 적으면 텍스트가 없는 PDF로 본다.
@@ -229,7 +229,7 @@ function buildSupportBox() {
   const text = document.createElement("p");
   text.className = "support-text";
   text.textContent =
-    "이 해석기가 도움이 되셨나요? 도움이 되셨다면 커피 한 잔으로 응원해 주세요.";
+    "여러분의 커피한잔 응원이 무료운영과 기능 개선에 큰 힘이 됩니다.";
   box.appendChild(text);
 
   // 카카오페이 송금 링크는 모바일 전용 — PC 브라우저 접속은 카카오페이 서버가
@@ -272,8 +272,11 @@ function buildSupportBox() {
     qrWrap.appendChild(qrImg);
     const qrCap = document.createElement("p");
     qrCap.className = "support-qr-caption";
-    qrCap.textContent =
-      "휴대폰 카메라로 QR을 찍으면 카카오페이로 후원할 수 있어요. (100원부터 부담 없이)";
+    qrCap.appendChild(
+      document.createTextNode("휴대폰 카메라로 QR을 찍으면 카카오페이로 후원할 수 있어요")
+    );
+    qrCap.appendChild(document.createElement("br"));
+    qrCap.appendChild(document.createTextNode("(100원부터 자유롭게)"));
     qrWrap.appendChild(qrCap);
     box.appendChild(qrWrap);
   }
