@@ -866,11 +866,13 @@ export function buildSummary(registryData) {
   }
 
   // C. 현재 살아있는 그 외 권리
+  //    purpose·접수일이 모두 빈 항목은 "자료불충분" 단독 행이 되므로 건너뛴다(창작 금지 — 스킵만).
   if (s.others.length > 0) {
     const { sub, ul } = summarySub("현재 살아있는 그 외 권리");
     for (const it of s.others) {
       const parts = [];
       const date = formatDate(it.receiptDate);
+      if (!date && !hasVal(it.purpose)) continue; // 의미 있는 내용 없음 → 행 생략
       if (date) parts.push(date);
       parts.push(displayValue(it.purpose));
       if (hasVal(it.party)) parts.push(String(it.party).trim());
@@ -879,22 +881,25 @@ export function buildSummary(registryData) {
       if (hasVal(it.caseNo)) parts.push(`사건번호 ${String(it.caseNo).trim()}`);
       addSummaryLine(ul, parts.join(" · "));
     }
-    wrap.appendChild(sub);
+    if (ul.childElementCount > 0) wrap.appendChild(sub); // 전부 스킵되면 섹션 생략
   }
 
   // D. 정리된(말소된) 권리 — 사실만("말소됨")
+  //    purpose·접수일이 모두 빈 항목(부기 전파로 말소된 필드 없는 항목 등)은
+  //    "자료불충분" 단독 행이 되므로 건너뛴다(창작 금지 — 스킵만).
   if (s.canceled.length > 0) {
     const { sub, ul } = summarySub("정리된(말소된) 권리");
     for (const it of s.canceled) {
       const parts = [];
       const date = formatDate(it.receiptDate);
+      if (!date && !hasVal(it.purpose)) continue; // 의미 있는 내용 없음 → 행 생략
       if (date) parts.push(date);
       parts.push(displayValue(it.purpose));
       let line = parts.join(" · ");
       if (hasVal(it.cause)) line += ` (원인: ${String(it.cause).trim()})`;
       addSummaryLine(ul, line);
     }
-    wrap.appendChild(sub);
+    if (ul.childElementCount > 0) wrap.appendChild(sub); // 전부 스킵되면 섹션 생략
   }
 
   // E. 근저당 이전 내역 (없으면 섹션 생략)
@@ -1213,9 +1218,13 @@ function buildEasyItem(item) {
   const chips = buildEasyChips(item);
   if (chips) body.appendChild(chips);
 
-  // 말소 꼬리표(중립)
+  // 말소 꼬리표(사실 동사형 — 원인이 있으면 등기부 기재 그대로 함께 표기)
   if (item.canceled === true) {
-    body.appendChild(el("p", "easy-canceled", "이 항목은 등기부에서 지워졌어요(말소)."));
+    let tail = "이 항목은 말소되었어요.";
+    if (hasVal(item.canceledCause)) {
+      tail += ` (원인: ${String(item.canceledCause).trim()})`;
+    }
+    body.appendChild(el("p", "easy-canceled", tail));
   }
 
   wrap.appendChild(body);
@@ -1238,62 +1247,100 @@ function buildEasyOutro() {
   return wrap;
 }
 
-/** 요약을 집요정 톤으로 풀어쓴 사실 문장(개수·합계만 — 평가/판단 금지). */
+/**
+ * 살아있는 권리 purpose → 대표 종류 라벨(구체적 → 일반 순 부분일치).
+ * 후보 미발견 시 purpose 원문(등기부 기재 그대로), 그것도 없으면 "기타".
+ * @param {string} purpose
+ * @returns {string}
+ */
+const RIGHT_KIND_CANDIDATES = [
+  "임의경매",
+  "강제경매",
+  "경매개시결정",
+  "가압류",
+  "처분금지가처분",
+  "가처분",
+  "압류",
+  "가등기",
+  "전세권",
+  "지상권",
+  "지역권",
+  "환매",
+];
+
+function rightKindLabel(purpose) {
+  const p = String(purpose == null ? "" : purpose);
+  const hit = RIGHT_KIND_CANDIDATES.find((c) => p.includes(c));
+  if (hit) return hit;
+  const t = p.trim();
+  return t !== "" ? t : "기타";
+}
+
+/**
+ * 요약을 집요정 톤의 이야기식 사실 문장으로(개수·합계만 — 평가/판단 금지).
+ * ① 말소 건수 ② 갑구에 살아있는 권리(종류별 건수) ③ 을구 근저당 합계
+ * ④ [요약본 보기] 안내 — 전부 computeSummary 수치 그대로(0건 분기 포함).
+ */
 function composeEasySummaryText(s) {
   const segs = [];
 
-  // 소유자 변동 이력(체인)을 쉬운 말로: 첫 주인 → … → 지금 주인(가장 최근 취득일).
-  const chain = s.ownerChain;
-  if (chain.length > 0) {
-    const names = chain.map((it) =>
-      hasVal(it.party) ? String(it.party).trim() : "자료불충분"
-    );
-    const lastName = names[names.length - 1];
-    const lastDate = formatDate(chain[chain.length - 1].receiptDate);
-    if (chain.length === 1) {
-      segs.push(
-        lastDate
-          ? `지금 이 집 주인은 ${lastName} 님이에요(가장 최근 ${lastDate}에 등기됐어요).`
-          : `지금 이 집 주인은 ${lastName} 님이에요.`
-      );
-    } else {
-      segs.push(
-        lastDate
-          ? `역대 주인은 ${names.join(" → ")} 순서로 바뀌었고, 지금 주인은 ${lastName} 님이에요(가장 최근 ${lastDate}에 바뀌었어요).`
-          : `역대 주인은 ${names.join(" → ")} 순서로 바뀌었고, 지금 주인은 ${lastName} 님이에요.`
-      );
-    }
-  }
-
-  if (s.mortgages.length > 0) {
-    if (s.hasSum) {
-      segs.push(
-        `지금 살아있는 빚(근저당)은 ${s.mortgages.length}건이고, 채권최고액을 다 더하면 ${formatAmount(s.sum)}이에요.`
-      );
-    } else {
-      segs.push(`지금 살아있는 빚(근저당)은 ${s.mortgages.length}건이에요.`);
-    }
+  // ① 말소 건수
+  if (s.canceled.length > 0) {
+    segs.push(`이 등기부에는 지금까지 총 ${s.canceled.length}건이 말소되었어요.`);
   } else {
-    segs.push("지금 살아있는 빚(근저당)은 없어요.");
+    segs.push("이 등기부에는 지금까지 말소된 항목이 없어요.");
   }
 
-  if (s.others.length > 0) {
-    segs.push(`그 외에 살아있는 권리는 ${s.others.length}건 있어요.`);
+  // ② 갑구에 살아있는 권리 — 종류별 집계(예: "가압류 2건, 임의경매 2건")
+  const gapItems = s.others.filter((it) => it && it.gu === "갑구");
+  if (gapItems.length > 0) {
+    const counts = new Map();
+    for (const it of gapItems) {
+      const kind = rightKindLabel(it.purpose);
+      counts.set(kind, (counts.get(kind) || 0) + 1);
+    }
+    const listed = Array.from(counts, ([kind, n]) => `${kind} ${n}건`).join(", ");
+    segs.push(`지금 갑구에 살아있는 권리는 ${listed}이에요.`);
+  } else {
+    segs.push("지금 갑구에 살아있는 권리는 없어요.");
   }
 
-  segs.push(`정리돼서 지워진(말소된) 권리는 ${s.canceled.length}건이에요.`);
-  segs.push("이건 등기부에 적힌 걸 그대로 세어본 사실 요약이에요.");
+  // ③ 을구 근저당 합계(변경 반영 현재 채권최고액 합)
+  if (s.mortgages.length === 0) {
+    segs.push("을구에 살아있는 근저당권은 없어요.");
+  } else if (s.hasSum) {
+    segs.push(`을구에는 총 ${formatAmount(s.sum)}의 근저당권이 설정되어 있어요.`);
+  } else {
+    segs.push(
+      `을구에는 근저당권이 ${s.mortgages.length}건 설정되어 있어요(금액은 자료불충분이에요).`
+    );
+  }
+
+  // ④ 요약본 안내(아래 버튼)
+  segs.push("자세한 건 아래 [요약본 보기]에서 확인할 수 있어요.");
 
   return segs.join(" ");
 }
 
-/** 중학생 모드 요약 행(집요정 + 쉬운 사실 문장). */
+/** 중학생 모드 요약 행(집요정 + 쉬운 사실 문장 + [요약본 보기] 버튼). */
 function buildEasySummary(registryData) {
   const s = computeSummary(registryData);
   const wrap = el("section", "easy-summary");
   wrap.setAttribute("aria-label", "요약");
   wrap.appendChild(mascotEl("point", 56));
   wrap.appendChild(bubbleEl(composeEasySummaryText(s), "bubble-summary"));
+
+  // [요약본 보기] — 기본 모드의 '한눈에 보기'(.summary)로 이동.
+  //   render 는 이벤트만 발행(가산형) — 실제 모드 전환/스크롤은 app.js 리스너 담당.
+  const actions = el("div", "easy-summary-actions");
+  const btn = el("button", "mode-btn mode-btn-basic mode-btn-summary", "요약본 보기");
+  btn.type = "button";
+  btn.addEventListener("click", () => {
+    document.dispatchEvent(new CustomEvent("deungki:showSummary"));
+  });
+  actions.appendChild(btn);
+  wrap.appendChild(actions);
+
   return wrap;
 }
 

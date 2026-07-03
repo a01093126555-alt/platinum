@@ -131,38 +131,43 @@ const GLOSSARY = [
   {
     keys: ['근저당권설정', '근저당권'], category: 'loan', color: 'amber', icon: 'ti-building-bank',
     basic: (v) => `${v.date}, ` + (v.hasAmount ? `채권최고액 ${v.amount}의 ` : '') + `근저당권이 설정되었습니다. 근저당권자는 ${v.party}입니다.`,
-    // 사용자 확정(2026-07): 사실형으로 — "설정되었어요". "돈을 빌렸어요" 같은 단정 표현 금지(등기부는 설정 사실만 기록).
-    easy: (v) => `${v.date}에 이 집에 근저당권이 설정되었어요.` + (v.party ? ` 근저당권자는 ${v.party}이에요.` : '') + (v.hasAmount ? ` 채권최고액(이 집을 담보로 빌릴 수 있는 최대 한도)은 ${v.amount}이에요.` : ''),
+    // 사용자 확정(2026-07): 사실형으로 — "설정되었어요". "돈을 빌렸어요" 같은 단정 표현 금지(등기부는 설정 사실만 기록). 괄호 풀이도 제거.
+    easy: (v) => `${v.date}에 이 집에 근저당권이 설정되었어요.` + (v.party ? ` 근저당권자는 ${v.party}이에요.` : '') + (v.hasAmount ? ` 채권최고액은 ${v.amount}이에요.` : ''),
   },
   // 7.9 강제경매개시결정
   {
     keys: ['강제경매'], category: 'auction', color: 'darkred', icon: 'ti-gavel',
     basic: (v) => `${v.date}, ${v.court}의 강제경매개시결정(${v.caseNo})이 등기되었습니다. 채권자는 ${v.party}입니다.`,
-    easy: (v) => `${v.date}에 ${v.party}이 '돈을 못 받았으니 집을 팔아서라도 받겠다'며 법원에 경매를 신청했어요(강제경매).`,
+    // 사실형(2026-07): 인용식 비유 제거 — 등기 사실만.
+    easy: (v) => `${v.date}에 법원의 강제경매개시결정이 등기되었어요.` + (v.party ? ` 채권자는 ${v.party}이에요.` : ''),
   },
   // 7.10 임의경매개시결정
   {
     keys: ['임의경매'], category: 'auction', color: 'darkred', icon: 'ti-gavel',
     basic: (v) => `${v.date}, ${v.court}의 임의경매개시결정(${v.caseNo})이 등기되었습니다. 채권자는 ${v.party}입니다.`,
-    easy: (v) => `${v.date}에 담보(근저당)를 잡고 있던 ${v.party}이 '돈을 안 갚으니 담보 잡은 집을 경매로 넘기겠다'고 했어요(임의경매).`,
+    // 사실형(2026-07): 인용식 비유 제거 — 등기 사실만.
+    easy: (v) => `${v.date}에 법원의 임의경매개시결정이 등기되었어요.` + (v.party ? ` 채권자는 ${v.party}이에요.` : ''),
   },
   // 7.6 가압류 — '압류'보다 먼저 검사
   {
     keys: ['가압류'], category: 'restraint', color: 'red', icon: 'ti-lock',
     basic: (v) => `${v.date}, ${v.court}의 결정(${v.caseNo})으로 가압류가 등기되었습니다. ` + (v.hasAmount ? `청구금액은 ${v.amount}, ` : '') + `채권자는 ${v.party}입니다.`,
-    easy: (v) => `${v.date}에 ${v.party}이 '나 받을 돈` + (v.hasAmount ? `(${v.amount})` : '') + ` 있으니 이 집 함부로 팔지 마!' 하고 임시로 묶었어요. 이게 '가압류'예요.`,
+    // 사실형(2026-07): 인용식 비유 제거 — 등기 사실 + 기재값만.
+    easy: (v) => `${v.date}에 법원 결정으로 가압류가 등기되었어요.` + (v.hasAmount ? ` 청구금액은 ${v.amount}` + (v.party ? `, 채권자는 ${v.party}이에요.` : `이에요.`) : (v.party ? ` 채권자는 ${v.party}이에요.` : '')),
   },
   // 7.7 압류
   {
     keys: ['압류'], category: 'restraint', color: 'red', icon: 'ti-lock',
     basic: (v) => `${v.date}, ${v.party}에 의해 압류가 등기되었습니다.`,
-    easy: (v) => `${v.date}에 ${v.party}이 이 집을 '진짜로' 묶었어요. (가압류는 임시로 찜, 압류는 꽉 묶음이라고 기억하면 쉬워요.)`,
+    // 사실형(2026-07): 인용식 비유 제거 — 등기 사실만.
+    easy: (v) => `${v.date}에 ` + (v.party ? `${v.party}에 의해 ` : '') + `압류가 등기되었어요.`,
   },
   // 7.8 가처분 (처분금지가처분 포함)
   {
     keys: ['가처분'], category: 'restraint', color: 'red', icon: 'ti-lock',
     basic: (v) => `${v.date}, ${v.court}의 결정(${v.caseNo})으로 처분금지가처분이 등기되었습니다. 권리자는 ${v.party}입니다.`,
-    easy: (v) => `${v.date}에 ${v.party}이 '이 집을 마음대로 처분하지 못하게' 막아뒀어요. 다툼이 있을 때 흔히 걸어요.`,
+    // 사실형(2026-07): 인용식 비유 제거 — 등기 사실만.
+    easy: (v) => `${v.date}에 법원 결정으로 처분금지가처분이 등기되었어요.` + (v.party ? ` 권리자는 ${v.party}이에요.` : ''),
   },
   // (가산) 전세권이전 / 전세권일부이전 — 금액 없음. 일반 '전세권' 설정보다 먼저.
   {
@@ -192,7 +197,8 @@ const GLOSSARY = [
   {
     keys: ['전세권'], category: 'right', color: 'teal', icon: 'ti-key',
     basic: (v) => `${v.date}, ` + (v.hasAmount ? `전세금 ${v.amount}의 ` : '') + `전세권이 설정되었습니다. 전세권자는 ${v.party}입니다.`,
-    easy: (v) => `${v.date}에 ${v.party}이 ` + (v.hasAmount ? `전세금 ${v.amount}을 걸고 ` : '') + `이 집에 살 권리(전세권)를 등기로 확실히 해뒀어요.`,
+    // 사실형(2026-07): "걸고 살 권리" 비유 제거 — 설정 사실 + 기재값만.
+    easy: (v) => `${v.date}에 ` + (v.hasAmount ? `전세금 ${v.amount}의 ` : '') + `전세권이 설정되었어요.` + (v.party ? ` 전세권자는 ${v.party}이에요.` : ''),
   },
   // (가산) 지상권이전 / 지상권일부이전 — 금액 없음. 일반 '지상권' 설정보다 먼저.
   {

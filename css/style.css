@@ -833,6 +833,14 @@ body {
   gap: 10px;
 }
 
+/* [요약본 보기] — 쉽게 보기 요약 말풍선 아래 이동 버튼(.mode-btn 재사용, 터치타겟 ≥44px) */
+.easy-summary-actions {
+  align-self: stretch;   /* 요약 행(플렉스) 안에서 가로 전체 차지 */
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}
+
 /* 타임라인 항목 카드 */
 .easy-item {
   position: relative;        /* 말소 X 마크 절대배치 기준 */
@@ -937,6 +945,14 @@ body {
   }
 
   .mode-switch { flex-direction: row; justify-content: center; }
+
+  /* [요약본 보기] 버튼: 가로 배치에서도 말풍선 아래 줄로 내림(아바타 56px+gap 만큼 들여쓰기) */
+  .easy-summary { flex-wrap: wrap; }
+  .easy-summary-actions {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+    margin-left: 70px;
+  }
 }
 
 /* ==========================================================================

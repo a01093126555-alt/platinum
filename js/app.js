@@ -181,6 +181,13 @@ const debouncedPostHeight = debounce(postHeight, 100);
 // showResult 마다 갱신된다(재파싱 없음). 기본 모드/파싱에는 영향 없음.
 let easyRerender = null;
 
+// [요약본 보기](쉽게 보기 요약 아래 버튼, render.js 가 발행하는 deungki:showSummary)
+// 처리 콜백. 리스너는 1회만 등록하고 콜백만 showResult 마다 갱신(재업로드 중복 방지).
+let showSummaryHandler = null;
+document.addEventListener("deungki:showSummary", () => {
+  if (showSummaryHandler) showSummaryHandler();
+});
+
 // ---------- 상태 메시지 헬퍼 ----------
 function setStatus(message, kind = "") {
   statusEl.textContent = message || "";
@@ -346,6 +353,29 @@ function showResult(data) {
     if (typeof basicGroup.focus === "function") basicGroup.focus();
     postHeight(); // 모드 전환으로 높이 급변 → 임베드 재조정
   });
+
+  // [요약본 보기] → 기본 모드로 전환(backBtn 과 동일 경로) 후 '한눈에 보기'(.summary)로 스크롤.
+  //   콜백만 갱신(리스너는 모듈 상단에서 1회 등록) — 기존 전환 버튼/시그니처 불변(가산형).
+  showSummaryHandler = () => {
+    setMode("basic", data, basicGroup, easyGroup);
+    if (typeof basicGroup.focus === "function") {
+      try {
+        basicGroup.focus({ preventScroll: true }); // 포커스 이동이 스크롤을 가로채지 않게
+      } catch (e) {
+        basicGroup.focus();
+      }
+    }
+    // 전환 직후에는 기본 뷰 레이아웃이 확정 전이라 스크롤 목표 좌표가 어긋난다.
+    // 다음 프레임 + 소지연 후 스크롤(레이스 방지).
+    // rAF 는 백그라운드 탭에서 정지되므로 쓰지 않는다 — setTimeout 만으로 확정 실행.
+    setTimeout(() => {
+      const summaryEl = basicGroup.querySelector(".summary");
+      if (summaryEl && typeof summaryEl.scrollIntoView === "function") {
+        summaryEl.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    }, 120);
+    postHeight(); // 모드 전환으로 높이 급변 → 임베드 재조정
+  };
 }
 
 // ---------- 지연 헬퍼 (Part 3: 의도적 체감지연 — 로컬 타이머만) ----------
