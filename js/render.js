@@ -516,33 +516,34 @@ function attachViewSwitch(root, visibleItems) {
   tabs.setAttribute("role", "group");
   tabs.setAttribute("aria-label", "보기 방식 선택");
 
-  const btnTime = el("button", "view-tab", "시간순 통합");
-  btnTime.type = "button";
-  btnTime.setAttribute("aria-pressed", "true");
-
+  // 사용자 확정(2026-07): 등기부 순서가 기본(먼저) 표시, 통합 뷰 명칭은 "등기부등본 통합본".
   const btnReg = el("button", "view-tab", "등기부 순서");
   btnReg.type = "button";
-  btnReg.setAttribute("aria-pressed", "false");
+  btnReg.setAttribute("aria-pressed", "true");
 
-  tabs.appendChild(btnTime);
+  const btnTime = el("button", "view-tab", "등기부등본 통합본");
+  btnTime.type = "button";
+  btnTime.setAttribute("aria-pressed", "false");
+
   tabs.appendChild(btnReg);
+  tabs.appendChild(btnTime);
   root.appendChild(tabs);
 
-  // 뷰 1: 시간순 통합(기존 타임라인 그대로, 기본 표시)
-  const integrated = el("div", "timeline view-integrated");
-  for (const item of visibleItems) integrated.appendChild(buildTimelineItem(item));
-  root.appendChild(integrated);
-
-  // 뷰 2: 등기부 순서(초기 숨김 — 첫 선택 시 1회 렌더)
+  // 뷰 1: 등기부 순서(기본 표시 — 즉시 렌더)
   const registry = el("div", "registry-view");
-  toggleHidden(registry, true);
+  registry.appendChild(buildRegistryOrderView(visibleItems));
   root.appendChild(registry);
 
-  let registryRendered = false;
+  // 뷰 2: 등기부등본 통합본(시간순 — 초기 숨김, 첫 선택 시 1회 렌더)
+  const integrated = el("div", "timeline view-integrated");
+  toggleHidden(integrated, true);
+  root.appendChild(integrated);
+
+  let integratedRendered = false;
   function selectView(showRegistry) {
-    if (showRegistry && !registryRendered) {
-      registry.appendChild(buildRegistryOrderView(visibleItems));
-      registryRendered = true;
+    if (!showRegistry && !integratedRendered) {
+      for (const item of visibleItems) integrated.appendChild(buildTimelineItem(item));
+      integratedRendered = true;
     }
     toggleHidden(integrated, showRegistry);
     toggleHidden(registry, !showRegistry);
