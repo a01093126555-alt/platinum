@@ -720,7 +720,7 @@ body {
    기존 .bubble/.bubble-text 규칙에 밀리지 않도록 .easy-summary 하위로 특정성 상향 */
 .easy-summary .easy-sum-box,
 .easy-summary .bubble.easy-sum-box {
-  background: #eef4fd !important;      /* 옅은 파랑 배경으로 요약칸 구분 */
+  background: #d8e8fb !important;      /* 파랑 배경 — 폰에서도 요약칸이 뚜렷하게(사용자 확정) */
   border: 2px solid var(--gu-gap, #1a5fa5) !important;
   border-radius: 12px;
   padding: 16px 18px;
