@@ -287,14 +287,36 @@ body {
 .tag-gap   { background: #e8f1fd; color: var(--gu-gap); }
 .tag-eul   { background: #f0edfb; color: var(--gu-eul); }
 
-/* 교육 블록(3분 이해) 안에서는 표제부/갑구/을구 태그를 크게(사용자 확정) */
+/* 교육 블록(3분 이해): 표제부/갑구/을구 태그가 주인공 — 크게.
+   "무엇인가/누구 것인가/빚이 얼마인가"는 보조 — 작게. (사용자 확정) */
 .edu-card .tag {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: 8px;
 }
-.edu-card .edu-h b { font-size: 16px; }
+.edu-card .edu-h b {
+  font-size: 13px;
+  font-weight: 500;
+  color: #5b6270;
+}
+
+/* summary 우측 "펼치기/접기" 표시 — open 상태에 따라 텍스트 전환 */
+.edu > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.edu-toggle { margin-left: auto; }
+.edu-toggle::after {
+  content: "펼치기";
+  font-size: 13px;
+  color: var(--accent, #1a5fa5);
+  border: 1px solid #dfe2e6;
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+.edu[open] .edu-toggle::after { content: "접기"; }
 
 /* ---------- 2층 · 헤더 + 면책 ---------- */
 .sec-title { font-size: 18px; font-weight: 500; margin: 0 0 8px; }

@@ -261,6 +261,8 @@ function buildEduBlock() {
   const summary = el("summary");
   summary.appendChild(bookIconEl());
   summary.appendChild(document.createTextNode(" 등기부등본 3분 이해"));
+  // 우측 "펼치기/접기" 표시(텍스트는 CSS content 로 open 상태에 따라 전환)
+  summary.appendChild(el("span", "edu-toggle"));
   details.appendChild(summary);
 
   const cards = el("div", "edu-cards");
