@@ -10,7 +10,13 @@
 //   glossary/parser 시그니처 불변).
 // ============================================================================
 
-import { getGlossary, formatAmount, formatDate, lookupTerm } from "./glossary.js";
+import {
+  getGlossary,
+  formatAmount,
+  formatDate,
+  lookupTerm,
+  collectTermExplains,
+} from "./glossary.js";
 import { mascotSvg } from "./mascot.js";
 
 // ---------------------------------------------------------------------------
@@ -1238,19 +1244,30 @@ function buildEasyItem(item) {
   return wrap;
 }
 
-/** 아웃트로: 집요정 + 면책 멘트를 대사로(설계서 9절). 빨강 강조로 경고 가독성↑. */
-function buildEasyOutro() {
-  const wrap = el("section", "easy-outro");
-  wrap.setAttribute("aria-label", "안내");
-  wrap.appendChild(mascotEl("default", 72, "mascot-lg"));
-  const bubble = bubbleEl(
-    "저는 등기부에 적힌 걸 쉽게 정리해드릴 뿐이고, 권리의 인수·소멸 같은 법적 판단은 못 해요. " +
-      "놓친 게 있을 수 있으니 꼭 등기부등본 원본이랑 비교해 보시고, 정확한 건 전문가와 상의하세요.",
-    "bubble-outro"
+/** 용어 해설(핑크 카드): 파싱된 등기부에 실제로 나온 용어만 사전식으로 풀이.
+ *  (구 아웃트로 면책 말풍선은 하단 공통 면책과 중복이라 제거 — 사용자 확정 2026-07) */
+function buildEasyTerms(timeline) {
+  const terms = collectTermExplains(timeline);
+  if (terms.length === 0) return null;
+
+  const wrap = el("section", "easy-terms");
+  wrap.setAttribute("aria-label", "용어 해설");
+  wrap.appendChild(el("h2", "easy-terms-title", "이 등기부에 나온 용어 해설"));
+
+  const dl = el("dl", "easy-terms-list");
+  for (const t of terms) {
+    dl.appendChild(el("dt", "easy-terms-term", t.label));
+    dl.appendChild(el("dd", "easy-terms-text", t.text));
+  }
+  wrap.appendChild(dl);
+
+  wrap.appendChild(
+    el(
+      "p",
+      "easy-terms-note",
+      "쉬운 이해를 돕기 위한 일반적인 설명이에요. 정확한 법률적 의미는 전문가와 상의하세요."
+    )
   );
-  const p = bubble.querySelector(".bubble-text");
-  if (p) p.classList.add("disclaimer-warn");
-  wrap.appendChild(bubble);
   return wrap;
 }
 
@@ -1433,8 +1450,10 @@ export function renderEasy(registryData, container, opts) {
     root.appendChild(buildEasySummary(data));
   }
 
-  // 4) 아웃트로(면책 대사)
-  root.appendChild(buildEasyOutro());
+  // 4) 용어 해설(핑크 카드) — 이 등기부에 나온 용어만. 없으면 생략.
+  //    (구 면책 말풍선은 하단 공통 면책과 중복이라 제거 — 사용자 확정 2026-07)
+  const termsBox = buildEasyTerms(timeline);
+  if (termsBox) root.appendChild(termsBox);
 
   container.appendChild(root);
   return container;

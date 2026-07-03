@@ -293,3 +293,67 @@ export function lookupTerm(word) {
   }
   return result;
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// (가산 2026-07) 용어 해설 — 쉽게 보기 하단 "이 등기부에 나온 용어 해설" 칸용.
+// 층1과 같은 빌드타임 템플릿(사용자 확정 문구) — 사전식 일반 설명만, 평가어·법적판단 없음.
+// 파싱된 등기부에 실제로 나온 용어만 표시(collectTermExplains).
+// ───────────────────────────────────────────────────────────────────────────
+
+/** 받침 유무에 따라 '이란/란' 조사 선택. 한글이 아니면 '이란'. */
+function iranJosa(word) {
+  const w = String(word || '');
+  const ch = w.charCodeAt(w.length - 1);
+  if (ch < 0xac00 || ch > 0xd7a3) return '이란';
+  return (ch - 0xac00) % 28 === 0 ? '란' : '이란';
+}
+
+// 순서 = 표시 순서. keys: purpose 부분일치. strip: 오매칭 방지용 사전 제거 패턴
+// (예: '가압류' 안의 '압류', 가등기의 '소유권이전청구권' 안의 '소유권이전').
+const TERM_EXPLAIN = [
+  { keys: ['근저당권'], term: '근저당권', text: '돈을 빌려준 사람(주로 은행)이 못 받을 때를 대비해 이 부동산을 담보로 잡아 두는 권리예요. \'채권최고액\'은 이 담보로 받을 수 있는 금액의 최대 한도예요.' },
+  { keys: ['질권'], term: '질권', text: '돈 받을 권리(채권)를 담보로 잡는 권리예요. \'근저당권부채권 질권설정\'은 근저당권자가 가진 채권을 다른 사람(질권자)이 다시 담보로 잡았다는 뜻이에요.' },
+  { keys: ['전세권'], term: '전세권', text: '전세금을 주고 이 부동산을 정해진 기간 동안 사용할 수 있는 권리를 등기부에 올린 거예요.' },
+  { keys: ['임차권'], term: '임차권', text: '세 들어 사는 사람(임차인)의 권리를 등기부에 올린 거예요.' },
+  { keys: ['가압류'], term: '가압류', text: '재판이 끝나기 전에 재산을 팔거나 숨기지 못하게, 채권자의 신청으로 법원이 임시로 묶어 두는 조치예요.' },
+  { keys: ['압류'], strip: /가압류/g, term: '압류', text: '밀린 세금이나 빚 때문에, 국가기관 등이 이 재산을 마음대로 처분하지 못하게 묶어 두는 조치예요.' },
+  { keys: ['가처분'], term: '가처분', text: '이 부동산을 두고 다툼이 있을 때, 판결이 나기 전까지 팔거나 넘기지 못하게 법원이 임시로 막아 두는 조치예요.' },
+  { keys: ['강제경매'], term: '강제경매', text: '법원 판결 등을 근거로 채권자가 신청해, 법원이 이 부동산을 경매에 부치는 절차예요.' },
+  { keys: ['임의경매'], term: '임의경매', text: '근저당권 같은 담보권을 가진 채권자가 신청해, 법원이 이 부동산을 경매에 부치는 절차예요.' },
+  { keys: ['가등기'], term: '가등기', text: '나중에 소유권 등을 넘겨받을 순서를 미리 확보해 두는 예비 등기예요.' },
+  { keys: ['소유권이전'], strip: /소유권이전청구권/g, term: '소유권이전', text: '부동산의 주인이 바뀌었다는 등기예요. 매매·상속·증여 등이 원인이 돼요.' },
+  { keys: ['소유권보존'], term: '소유권보존', text: '새로 지어진 건물 등이 등기부에 처음으로 기록되는 등기예요.' },
+  { keys: ['지상권'], term: '지상권', text: '남의 땅 위에 건물이나 나무 등을 세워 쓸 수 있는 권리예요.' },
+  { keys: ['지역권'], term: '지역권', text: '이웃 땅의 편의를 위해 이 땅의 일부를 이용할 수 있게 하는 권리예요.' },
+];
+
+// '말소'는 purpose 가 아니라 canceled 플래그로 판단하는 특수 항목.
+const CANCELED_EXPLAIN = {
+  term: '말소',
+  text: '등기가 지워져 효력을 잃었다는 표시예요. 이 프로그램에서는 빨간 줄로 표시해요.',
+};
+
+/**
+ * 파싱된 타임라인에 실제로 나온 용어의 해설 목록을 만든다.
+ * @param {Array} timeline - registryData.timeline
+ * @returns {Array<{term:string, label:string, text:string}>} 없으면 빈 배열
+ */
+export function collectTermExplains(timeline) {
+  const items = (Array.isArray(timeline) ? timeline : []).filter(
+    (it) => it && it.display !== false
+  );
+  const out = [];
+  for (const t of TERM_EXPLAIN) {
+    const hit = items.some((it) => {
+      let p = it.purpose == null ? '' : String(it.purpose);
+      if (t.strip) p = p.replace(t.strip, '');
+      return t.keys.some((k) => p.includes(k));
+    });
+    if (hit) out.push({ term: t.term, label: `${t.term}${iranJosa(t.term)}?`, text: t.text });
+  }
+  if (items.some((it) => it.canceled === true)) {
+    const c = CANCELED_EXPLAIN;
+    out.push({ term: c.term, label: `${c.term}${iranJosa(c.term)}?`, text: c.text });
+  }
+  return out;
+}

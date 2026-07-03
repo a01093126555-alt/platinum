@@ -1212,6 +1212,42 @@ body {
 
 /* (구 "등기부 순서 뷰" 순위번호 컬럼·refsum 스타일은 설계서 5-4 reg-item 구조로 대체됨) */
 
+/* 용어 해설(쉽게 보기) — 후원 박스와 같은 핑크 카드(사용자 확정 2026-07) */
+.easy-terms {
+  margin-top: 18px;
+  padding: 16px 14px;
+  background: #fdeef3;
+  border: 1px solid #f3c9d8;
+  border-radius: var(--radius);
+}
+.easy-terms-title {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  word-break: keep-all;
+}
+.easy-terms-list { margin: 0; }
+.easy-terms-term {
+  margin-top: 12px;
+  font-weight: 700;
+  color: #a83a5c;            /* 핑크 카드 위 진한 로즈 — 대비 확보 */
+}
+.easy-terms-term:first-child { margin-top: 0; }
+.easy-terms-text {
+  margin: 3px 0 0;
+  line-height: 1.65;
+  color: var(--text);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.easy-terms-note {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  word-break: keep-all;
+}
+
 /* 표제부 블록 — 파란 톤(사용자 확정 2026-07) */
 .reg-block-pyo {
   background: #e7f1fd;
