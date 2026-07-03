@@ -232,44 +232,51 @@ function buildSupportBox() {
     "이 해석기가 도움이 되셨나요? 도움이 되셨다면 커피 한 잔으로 응원해 주세요.";
   box.appendChild(text);
 
-  const link = document.createElement("a");
-  link.className = "support-button";
-  link.href = SUPPORT.url;
-  link.target = "_blank";           // 티스토리 iframe 안 → 새 탭 필수
-  link.rel = "noopener";
+  // 카카오페이 송금 링크는 모바일 전용 — PC 브라우저 접속은 카카오페이 서버가
+  // 404로 거부함(실측 확인: PC UA 404 / iPhone·Android UA 200).
+  // → 모바일 기기: 버튼(앱 직결)만 표시 / PC: 버튼 없이 QR(폰 카메라 스캔)만 표시.
+  const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // 커피잔 아이콘 — 인라인 SVG(머그컵 + 손잡이 + 김), currentColor. 장식용.
-  const iconWrap = document.createElement("span");
-  iconWrap.className = "support-icon";
-  iconWrap.setAttribute("aria-hidden", "true");
-  iconWrap.innerHTML =
-    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" ' +
-    'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
-    'stroke-linejoin="round">' +
-    '<rect x="3" y="10" width="12" height="9" rx="2"/>' +
-    '<path d="M15 12h2a3 3 0 0 1 0 6h-2"/>' +
-    '<path d="M6 7c0-1 .8-1.2.8-2"/>' +
-    '<path d="M10 7c0-1 .8-1.2.8-2"/>' +
-    "</svg>";
-  link.appendChild(iconWrap);
-  link.appendChild(document.createTextNode(SUPPORT.label));
-  box.appendChild(link);
+  if (isMobileDevice) {
+    const link = document.createElement("a");
+    link.className = "support-button";
+    link.href = SUPPORT.url;
+    link.target = "_blank";         // 티스토리 iframe 안 → 새 탭 필수
+    link.rel = "noopener";
 
-  // PC 방문자용 QR(동봉 정적 SVG — 외부 QR API 미사용): 폰 카메라로 찍어 송금.
-  // 모바일에서는 버튼이 앱으로 바로 연결되므로 CSS로 숨김(768px 이상에서만 표시).
-  const qrWrap = document.createElement("div");
-  qrWrap.className = "support-qr";
-  const qrImg = document.createElement("img");
-  qrImg.src = "assets/kakaopay-qr.svg";
-  qrImg.alt = "카카오페이 후원 QR 코드";
-  qrImg.width = 132;
-  qrImg.height = 132;
-  qrWrap.appendChild(qrImg);
-  const qrCap = document.createElement("p");
-  qrCap.className = "support-qr-caption";
-  qrCap.textContent = "PC에서는 휴대폰 카메라로 QR을 찍어 후원할 수 있어요.";
-  qrWrap.appendChild(qrCap);
-  box.appendChild(qrWrap);
+    // 커피잔 아이콘 — 인라인 SVG(머그컵 + 손잡이 + 김), currentColor. 장식용.
+    const iconWrap = document.createElement("span");
+    iconWrap.className = "support-icon";
+    iconWrap.setAttribute("aria-hidden", "true");
+    iconWrap.innerHTML =
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" ' +
+      'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+      'stroke-linejoin="round">' +
+      '<rect x="3" y="10" width="12" height="9" rx="2"/>' +
+      '<path d="M15 12h2a3 3 0 0 1 0 6h-2"/>' +
+      '<path d="M6 7c0-1 .8-1.2.8-2"/>' +
+      '<path d="M10 7c0-1 .8-1.2.8-2"/>' +
+      "</svg>";
+    link.appendChild(iconWrap);
+    link.appendChild(document.createTextNode(SUPPORT.label));
+    box.appendChild(link);
+  } else {
+    // PC 방문자용 QR(동봉 정적 SVG — 외부 QR API 미사용): 폰 카메라로 찍어 송금.
+    const qrWrap = document.createElement("div");
+    qrWrap.className = "support-qr";
+    const qrImg = document.createElement("img");
+    qrImg.src = "assets/kakaopay-qr.svg";
+    qrImg.alt = "카카오페이 후원 QR 코드";
+    qrImg.width = 132;
+    qrImg.height = 132;
+    qrWrap.appendChild(qrImg);
+    const qrCap = document.createElement("p");
+    qrCap.className = "support-qr-caption";
+    qrCap.textContent =
+      "휴대폰 카메라로 QR을 찍으면 카카오페이로 후원할 수 있어요. (100원부터 부담 없이)";
+    qrWrap.appendChild(qrCap);
+    box.appendChild(qrWrap);
+  }
 
   return box;
 }
