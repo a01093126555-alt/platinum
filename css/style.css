@@ -1186,7 +1186,7 @@ body {
   max-width: 100%;
   background: var(--c-loan); /* amber 계열 */
   color: #3b2b06;            /* amber 위 어두운 갈색 글자 — 대비 확보 */
-  border-radius: var(--radius-sm);
+  border-radius: 999px;      /* 타원(알약) 모양 — 사용자 확정 2026-07 */
   font-size: 1rem;          /* 본문 ≥16px */
   font-weight: 600;
   text-decoration: none;    /* 앵커 밑줄 제거 */
