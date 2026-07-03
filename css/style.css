@@ -1157,8 +1157,8 @@ body {
 .support-box {
   margin-top: 20px;
   padding: 20px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #fdeef3;              /* 핑크 카드(사용자 확정 2026-07) */
+  border: 1px solid #f3c9d8;
   border-radius: var(--radius);
   display: flex;
   flex-direction: column;
