@@ -716,6 +716,33 @@ body {
 }
 .bubble-summary { border-color: var(--accent); }
 
+/* '쉬운 요약' 박스 — 요약칸답게 뚜렷하게(사용자 확정: 시인성 확보)
+   기존 .bubble/.bubble-text 규칙에 밀리지 않도록 .easy-summary 하위로 특정성 상향 */
+.easy-summary .easy-sum-box,
+.easy-summary .bubble.easy-sum-box {
+  background: #eef4fd !important;      /* 옅은 파랑 배경으로 요약칸 구분 */
+  border: 2px solid var(--gu-gap, #1a5fa5) !important;
+  border-radius: 12px;
+  padding: 16px 18px;
+  width: 100%;
+}
+.easy-summary .easy-sum-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--gu-gap, #1a5fa5);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #cfe0f5;
+}
+.easy-summary .easy-sum-text,
+.easy-summary .bubble-text.easy-sum-text {
+  font-size: 16px;
+  font-weight: 700;                    /* 진하게 */
+  color: var(--gu-gap, #1a5fa5);       /* 파란색 통일 */
+  line-height: 1.75;
+}
+.easy-summary .easy-kw { color: #c92a2a; } /* 갑구/을구/등기부등본 만 빨강 */
+
 /* ---------- 반응형 ---------- */
 /* 태블릿 768px~: 헤더 2열, 업로드 여백 확대 */
 @media (min-width: 768px) {

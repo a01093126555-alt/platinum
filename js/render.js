@@ -1325,13 +1325,33 @@ function composeEasySummaryText(s) {
   return segs.join(" ");
 }
 
-/** 중학생 모드 요약 행(집요정 + 쉬운 사실 문장 + [요약본 보기] 버튼). */
+/** 요약 문장 → 키워드(갑구/을구/등기부등본)만 빨간 span 으로 색칠한 p 엘리먼트.
+ *  문장은 우리가 직접 조립한 사실 문자열이라 안전(사용자 입력 innerHTML 없음). */
+function easySummaryTextEl(text) {
+  const p = el("p", "bubble-text easy-sum-text");
+  const parts = String(text).split(/(갑구|을구|등기부등본)/);
+  for (const part of parts) {
+    if (part === "갑구" || part === "을구" || part === "등기부등본") {
+      p.appendChild(el("span", "easy-kw", part));
+    } else if (part) {
+      p.appendChild(document.createTextNode(part));
+    }
+  }
+  return p;
+}
+
+/** 중학생 모드 요약 행(집요정 + '쉬운 요약' 박스 + [요약본 보기] 버튼). */
 function buildEasySummary(registryData) {
   const s = computeSummary(registryData);
   const wrap = el("section", "easy-summary");
-  wrap.setAttribute("aria-label", "요약");
+  wrap.setAttribute("aria-label", "쉬운 요약");
   wrap.appendChild(mascotEl("point", 56));
-  wrap.appendChild(bubbleEl(composeEasySummaryText(s), "bubble-summary"));
+
+  // 요약칸: 타이틀 + 진한 파란 본문(키워드는 빨강) — 시인성 확보(사용자 확정)
+  const box = el("div", "bubble bubble-summary easy-sum-box");
+  box.appendChild(el("div", "easy-sum-title", "쉬운 요약"));
+  box.appendChild(easySummaryTextEl(composeEasySummaryText(s)));
+  wrap.appendChild(box);
 
   // [요약본 보기] — 기본 모드의 '한눈에 보기'(.summary)로 이동.
   //   render 는 이벤트만 발행(가산형) — 실제 모드 전환/스크롤은 app.js 리스너 담당.
