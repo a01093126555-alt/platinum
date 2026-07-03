@@ -1292,8 +1292,22 @@ function composeEasySummaryText(s) {
   const segs = [];
 
   // ① 말소 건수
+  //    아래 "정리된(말소된) 권리" 목록은 접수일·등기목적이 모두 빈 항목(부기 전파분 등)을
+  //    생략하므로, 총 건수와 목록 건수가 다를 수 있음 → 그 차이를 문장으로 명시(사용자 확정).
   if (s.canceled.length > 0) {
-    segs.push(`이 등기부에는 지금까지 총 ${s.canceled.length}건이 말소되었어요.`);
+    const shownCount = s.canceled.filter(
+      (it) => formatDate(it.receiptDate) || hasVal(it.purpose)
+    ).length;
+    const skippedCount = s.canceled.length - shownCount;
+    if (skippedCount > 0) {
+      segs.push(
+        `이 등기부에는 지금까지 총 ${s.canceled.length}건이 말소되었어요. ` +
+          `이 중 접수일·등기목적이 기재되지 않은 ${skippedCount}건(부기등기 등)은 목록에서 제외했고, ` +
+          `권리관계에서 중요한 말소는 ${shownCount}건이에요.`
+      );
+    } else {
+      segs.push(`이 등기부에는 지금까지 총 ${s.canceled.length}건이 말소되었어요.`);
+    }
   } else {
     segs.push("이 등기부에는 지금까지 말소된 항목이 없어요.");
   }
